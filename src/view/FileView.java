@@ -96,8 +96,6 @@ public class FileView {
 				System.out.println(newContent + " newContent");
 				if (!newContent.equals(oldContent)) {
 					event.consume();
-					// Alert alert = new Alert(AlertType.CONFIRMATION, "sure?");
-					// Optional<ButtonType> result = alert.showAndWait();
 					Alert alert = new Alert(AlertType.CONFIRMATION);
 					alert.setTitle("保存更改");
 					alert.setHeaderText(null);
@@ -108,9 +106,6 @@ public class FileView {
 					alert.getButtonTypes().setAll(saveType, noType, cancelType);
 					Optional<ButtonType> result = alert.showAndWait();
 					if (result.get() == saveType) {
-						// if (newContent == null) {
-						// newContent = "";
-						// }
 						saveContent(newContent);
 					} else if (result.get() == cancelType) {
 						isCancel = true;
@@ -139,7 +134,6 @@ public class FileView {
 				parent = (Folder) parent.getParent();
 				parent.setSize(Utility.getFolderSize(parent));
 			}
-			System.out.println(parent.getSize());
 		}
 		fatManager.reallocFAT(FATcount, fat);
 		mainView.refreshFATTable();

@@ -13,7 +13,6 @@ public class Utility {
 	public static String folderPath = "/images/folder.png";
 	public static String filePath = "/images/file.png";
 	public static String diskPath = "/images/disk.png";
-	public static String imgPath = "/images/img1.jpg";
 	
 	public static int END = 255;
 	public static int ERROR = -1;
@@ -26,24 +25,9 @@ public class Utility {
 	
 		
 	public static int flagRead = 0;
-	public static int flagWrite = 1;
+	public static int flagWrite = 1;	
 	
-	/*
-	 * 动态地根据JLabel来设置JPanel的height
-	 */
-	public static int getHeight(int n){
-		int a = 0;
-		a = n / 4;
-		if (n % 4 > 0){
-			a++;
-		}
-		return a * 120;
-	}
 	
-	/**
-	 * 每一次保存时都算出
-	 * @return
-	 */
 	public static int getNumOfFAT(int length){
 		if (length <= 64){
 			return 1;
@@ -102,4 +86,5 @@ public class Utility {
 		}
 		return Double.parseDouble((String.format("%.2f", size)));
 	}
+	
 }

@@ -37,8 +37,7 @@ public class RenameView {
 	private String oldName;
 
 	public RenameView(FAT fat, FATManager fatManager, Label icon,
-			MainView mainView,
-			Map<Path, TreeItem<String>> pathMap) {
+			MainView mainView, Map<Path, TreeItem<String>> pathMap) {
 		// TODO Auto-generated constructor stub
 		this.fat = fat;
 		this.fatManager = fatManager;

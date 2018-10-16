@@ -376,20 +376,16 @@ public class MainView {
 	private void addIcon(List<FAT> fList, String path) {
 		fatList = fList;
 		int n = fList.size();
-		flowPane.setPrefSize(482, Utility.getHeight(n));
+		//flowPane.setPrefSize(482, Utility.getHeight(n));
 		icons = new Label[n];
 		for (int i = 0; i < n; i++) {
 			if (fList.get(i).getIndex() == Utility.END){
 				if (fList.get(i).getObject() instanceof Folder){
 					icons[i] = new Label(((Folder)fList.get(i).getObject()).getFolderName(),
-							new ImageView(Utility.folderPath));					
-//					icons[i].setLabelFor(folderIcon);
-//					System.out.println(icons[i].labelForProperty());
+							new ImageView(Utility.folderPath));
 				} else {
 					icons[i] = new Label(((File)fList.get(i).getObject()).getFileName(),
 							new ImageView(Utility.filePath));
-//					icons[i].setLabelFor(fileIcon);
-//					System.out.println(icons[i].labelForProperty());
 				}
 				icons[i].setContentDisplay(ContentDisplay.TOP);
 				icons[i].setWrapText(true);

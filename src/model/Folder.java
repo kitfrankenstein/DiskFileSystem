@@ -12,21 +12,18 @@ import java.util.List;
  */
 public class Folder {
 
-	private String folderName; // 3个字节
-	// 保留2个字节 填写空格
-	private String property;// 1个字节
-	private int diskNum;// 1个字节
-	// 保留1个字节未利用 填写0
+	private String folderName;
+	private String property;
+	private int diskNum;
 	private String type;
 
 	private boolean hasChild;
 	private int numOfFAT;
 
-	// 查看的属性
-	private String location; // 位置
-	private double size; // 大小
-	private String space; // 占用空间
-	private Date createTime; // 创建时间
+	private String location;
+	private double size;
+	private String space;
+	private Date createTime;
 
 	private Folder parent;
 	private List<Object> children;

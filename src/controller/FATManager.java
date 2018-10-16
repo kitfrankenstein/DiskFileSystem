@@ -19,7 +19,6 @@ public class FATManager {
 
 	private FAT[] FATs;
 	private List<OpenedFile> openedFiles;
-	// private Disk cDisk = new Disk("C");
 	private Folder c;
 	private Path rootPath = new Path("C:", null);
 	private List<Path> paths;
@@ -51,20 +50,28 @@ public class FATManager {
 			if (openedFiles.get(i).getFile() == thisFile) {
 				openedFiles.remove(i);
 				thisFile.setOpenedFile(null);
+				break;
 			}
 		}
 	}
 
 	public boolean isOpenedFile(FAT fat) {
+		if (fat.getObject() instanceof Folder) {
+			return false;
+		}
 		return ((File) fat.getObject()).isOpened();
 	}
 
-	// 创建文件夹
+	/**
+	 * 
+	 * @param path
+	 * @return
+	 */
 	public int createFolder(String path) {
 		String folderName = null;
 		boolean canName = true;
 		int index = 1;
-		// 得到新建文件夹名字
+		// 得到文件夹名
 		do {
 			folderName = "新建文件夹";
 			canName = true;
@@ -83,7 +90,6 @@ public class FATManager {
 			}
 			index++;
 		} while (!canName);
-		// 在myFAT中添加文件夹
 		int index2 = searchEmptyFromMyFAT();
 		if (index2 == Utility.ERROR) {
 			return Utility.ERROR;
@@ -106,15 +112,15 @@ public class FATManager {
 	}
 
 	/**
-	 * 创建文件
 	 * 
+	 * @param path
 	 * @return
 	 */
 	public int createFile(String path) {
 		String fileName = null;
 		boolean canName = true;
 		int index = 1;
-		// 得到新建文件名字
+		// 得到文件名
 		do {
 			fileName = "新建文件";
 			canName = true;
@@ -133,7 +139,6 @@ public class FATManager {
 			}
 			index++;
 		} while (!canName);
-		// 在myFAT中添加文件
 		int index2 = searchEmptyFromMyFAT();
 		if (index2 == Utility.ERROR) {
 			return Utility.ERROR;
@@ -148,7 +153,7 @@ public class FATManager {
 		return index2;
 	}
 
-	// 得到myFAT中第一个为空的磁盘块索引
+	// 得到第一个为空的磁盘块
 	public int searchEmptyFromMyFAT() {
 		for (int i = 2; i < FATs.length; i++) {
 			if (FATs[i].isFree()) {
@@ -158,7 +163,6 @@ public class FATManager {
 		return Utility.ERROR;
 	}
 
-	// 得到磁盘块的使用
 	public int getNumOfFAT() {
 		int n = 0;
 		for (int i = 2; i < FATs.length; i++) {
@@ -169,7 +173,6 @@ public class FATManager {
 		return n;
 	}
 
-	// 得到空的磁盘块数量
 	public int getSpaceOfFAT() {
 		int n = 0;
 		for (int i = 2; i < FATs.length; i++) {
@@ -324,13 +327,9 @@ public class FATManager {
 	 */
 	public int delete(FAT fat) {
 		if (fat.getType() == Utility.FILE) {
-			// ---------------->文件
-			// 判断是否文件正在打开，如果打开则不能删除
-			for (int i = 0; i < openedFiles.size(); i++) {
-				if (openedFiles.get(i).getFile().equals(fat.getObject())) {
-					// 文件正打开着，不能删除
-					return 3;
-				}
+			if (isOpenedFile(fat)) {
+				// 文件正打开着，不能删除
+				return 3;
 			}
 			File thisFile = (File) fat.getObject();
 			Folder parent = thisFile.getParent();
@@ -344,22 +343,15 @@ public class FATManager {
 			}
 			for (int i = 2; i < FATs.length; i++) {
 				if (!FATs[i].isFree() && FATs[i].getType() == Utility.FILE) {
-					if (((File) FATs[i].getObject()).equals(fat.getObject())) {// 同一个对象，见saveToModifyFATS2方法
-						System.out.println(FATs[i].toString());
-						System.out.println(i);
-						System.out.println(fat.toString() + fat.getObject().toString());
+					if (((File) FATs[i].getObject()).equals(fat.getObject())) {// 同一个对象
 						FATs[i].clearFAT();
-						System.out.println("----------------------->删除");
 					}
 				}
 			}
 			return 1;
 		} else {
-			// ---------------->文件夹
-			// String path = ((Folder)fat.getObject()).getLocation();
 			String folderPath = ((Folder) fat.getObject()).getLocation() + "\\"
 					+ ((Folder) fat.getObject()).getFolderName();
-			System.out.println("路径：" + folderPath);
 			int index = 0;
 			for (int i = 2; i < FATs.length; i++) {
 				if (!FATs[i].isFree()) {

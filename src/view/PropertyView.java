@@ -54,12 +54,6 @@ public class PropertyView {
 	}
 	
 	private void showView() {
-//		name = new Label("名称");
-//		type = new Label("文件类型");
-//		location = new Label("位置");
-//		size = new Label("大小");
-//		space = new Label("占用空间");
-//		time = new Label("建立时间");
 		if (fat.getObject() instanceof Folder) {
 			Folder folder = (Folder)fat.getObject();
 			nameField = new TextField(folder.getFolderName());
@@ -85,7 +79,7 @@ public class PropertyView {
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
 				// TODO Auto-generated method stub
-				if (newValue == null) {
+				if (newValue == null || newValue.equals(oldValue)) {
 					applyButton.setDisable(true);
 				} else {
 					applyButton.setDisable(false);

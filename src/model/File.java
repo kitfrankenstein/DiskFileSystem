@@ -10,22 +10,20 @@ import java.util.Date;
  */
 public class File {
 
-	// 文件的目录项 占用8个字节
-	private String fileName; // 字母、数字和除 $ . / 3个字节
-	private String type;// 2个字节 类型
-	private String property;// 1个字节 属性
-	private int diskNum;// 1个字节 起始盘块号
-	private int length;// 1个字节 长度，占用盘块数
+	private String fileName;
+	private String type;// 类型
+	private String property;// 属性
+	private int diskNum;// 起始盘块号
+	private int length;// 占用盘块数
 	private String content;// 内容
 
 	private Folder parent;
 	private OpenedFile openedFile;
 
-	// 查看的属性
 	private String location; // 位置
 	private double size; // 大小
 	private String space; // 占用空间
-	private Date createTime; // 创建时间
+	private Date createTime;
 
 	public File(String fileName) {
 		this.fileName = fileName;

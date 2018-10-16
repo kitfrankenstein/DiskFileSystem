@@ -12,8 +12,6 @@ public class OpenedFile {
 	private int diskNum;
 	private String path;
 	private int length;
-	private Pointer read;
-	private Pointer write;
 	private File file;
 
 	public OpenedFile(File file, int flag) {
@@ -63,22 +61,6 @@ public class OpenedFile {
 
 	public void setLength(int length) {
 		this.length = length;
-	}
-
-	public Pointer getRead() {
-		return read;
-	}
-
-	public void setRead(Pointer read) {
-		this.read = read;
-	}
-
-	public Pointer getWrite() {
-		return write;
-	}
-
-	public void setWrite(Pointer write) {
-		this.write = write;
 	}
 
 	public File getFile() {

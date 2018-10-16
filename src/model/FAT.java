@@ -8,9 +8,9 @@ package model;
 public class FAT {
 
 	private int no;
-	private int index;// 磁盘块
-	private String type;// 该磁盘块中存放的是File还是Folder
-	private Object object;// File或Folder
+	private int index;
+	private String type;
+	private Object object;
 
 	public FAT(int no, int index, String type, Object object) {
 		super();
@@ -26,7 +26,6 @@ public class FAT {
 
 	public void setNo(int no) {
 		this.no = no;
-		// this.noProperty.set(no);
 	}
 
 	public int getIndex() {
@@ -35,7 +34,6 @@ public class FAT {
 
 	public void setIndex(int index) {
 		this.index = index;
-		// this.indexProperty.set(index);
 	}
 
 	public String getType() {
@@ -44,7 +42,6 @@ public class FAT {
 
 	public void setType(String type) {
 		this.type = type;
-		// this.typeProperty.set(type);
 	}
 
 	public Object getObject() {
