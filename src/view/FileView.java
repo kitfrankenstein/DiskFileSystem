@@ -81,7 +81,7 @@ public class FileView {
 		stage = new Stage();
 		stage.setScene(scene);
 		stage.setTitle(file.getFileName());
-		stage.getIcons().add(new Image(Utility.filePath));
+		stage.getIcons().add(new Image(Utility.fileImg));
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
 			@Override

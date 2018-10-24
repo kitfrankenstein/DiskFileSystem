@@ -10,9 +10,12 @@ import java.util.List;
 public class Utility {
 	
 	public static int num = 5;
-	public static String folderPath = "/images/folder.png";
-	public static String filePath = "/images/file.png";
-	public static String diskPath = "/images/disk.png";
+	public static String folderImg = "/images/folder.png";
+	public static String fileImg = "/images/file.png";
+	public static String diskImg = "/images/disk.png";
+	public static String treeNodeImg = "/images/node.png";
+	public static String forwardImg = "/images/forward.png";
+	public static String backImg = "/images/back.png";
 	
 	public static int END = 255;
 	public static int ERROR = -1;
@@ -22,8 +25,7 @@ public class Utility {
 	public static String FOLDER = "文件夹";
 	public static String FILE = "文件";
 	public static String EMPTY = "空";
-	
-		
+			
 	public static int flagRead = 0;
 	public static int flagWrite = 1;	
 	

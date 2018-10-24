@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 
 import controller.FATManager;
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -30,8 +29,6 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ContentDisplay;
 import javafx.scene.control.ContextMenu;
 import javafx.scene.control.Label;
-import javafx.scene.control.Menu;
-import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
@@ -40,11 +37,9 @@ import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.stage.Stage;
 
 /**
@@ -61,7 +56,9 @@ public class MainView {
 	private Map<Path, TreeItem<String>> pathMap;
 	
 	private Scene scene;
-	private BorderPane borderPane;
+	private HBox workBox, mainBox;
+	private VBox rightBox, fullBox;
+	
 	
 	private FlowPane flowPane;
 	private Label[] icons;
@@ -70,14 +67,9 @@ public class MainView {
 	private Label locLabel;
 	private TextField locField;
 	private Button gotoButton, backButton;
-	private MenuBar menuBar;
-	private Menu startMenu;
-	private MenuItem exItem;
-	private VBox vBox;
 	
 	private TreeView<String> treeView;
 	private TreeItem<String> rootNode, recentNode;
-	private ImageView rootImg = new ImageView(Utility.diskPath);
 	
 	private TableView<FAT> fatTable;
 	private TableView<OpenedFile> openedTable;
@@ -105,8 +97,10 @@ public class MainView {
 		initTreeView();
 				
 		flowPane = new FlowPane();
-		flowPane.setPrefSize(400, 100);
-		flowPane.setStyle("-fx-background-color: #ffffff;");
+		flowPane.setPrefSize(600, 100);
+		flowPane.setStyle("-fx-background-color: #ffffff;"
+				+ "-fx-border-color: #ffffff;"
+				+ "-fx-border-width:0.5px;");
 		flowPane.addEventHandler(MouseEvent.MOUSE_CLICKED,  (MouseEvent me) -> {
 			if (me.getButton() == MouseButton.SECONDARY &&
 					!contextMenu2.isShowing()) {
@@ -116,23 +110,32 @@ public class MainView {
 			}
 		});		
 	    
-		borderPane = new BorderPane();
-                     
-        borderPane.setCenter(flowPane);        
-        borderPane.setTop(vBox);
-        borderPane.setBottom(openedTable);
-        borderPane.setLeft(treeView);
-        borderPane.setRight(fatTable);
-
-        borderPane.setStyle("-fx-background-radius: 3px;"
-        		+ "-fx-border-color:#95AFA6;"
-        		+ "-fx-border-width:3px;"
-        		+ "-fx-border-radius:3px;");
-        
-        scene = new Scene(borderPane);
-        scene.setFill(Color.TRANSPARENT);
+//		borderPane = new BorderPane();
+//                     
+//        borderPane.setCenter(flowPane);        
+//        borderPane.setTop(locBox);
+//        borderPane.setBottom(openedTable);
+//        borderPane.setLeft(treeView);
+//        borderPane.setRight(fatTable);
+//
+//        borderPane.setStyle("-fx-background-radius: 3px;"
+//        		+ "-fx-border-color:#95AFA6;"
+//        		+ "-fx-border-width:3px;"
+//        		+ "-fx-border-radius:3px;");
+//        
+//        scene = new Scene(borderPane);
+		
+		workBox = new HBox(flowPane, fatTable);
+		rightBox = new VBox(workBox, openedTable);
+		mainBox = new HBox(treeView, rightBox);
+		fullBox = new VBox(locBox, mainBox);
+		fullBox.setPrefSize(1090, 600);
+		
+		scene = new Scene(fullBox);
+        //scene.setFill(Color.TRANSPARENT);
         stage.setScene(scene);
-        stage.getIcons().add(new Image(Utility.diskPath));
+        stage.setResizable(false);
+        stage.getIcons().add(new Image(Utility.diskImg));
         stage.setTitle("模拟磁盘文件系统");
         stage.show();
 	}
@@ -153,20 +156,21 @@ public class MainView {
 	
 	private void menuItemSetOnAction() {
 		createFileItem.setOnAction(ActionEvent -> {
-			int no = fatManager.createFile(locField.getText());
+			int no = fatManager.createFile(recentPath);
 			if (no == Utility.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
 				alert.showAndWait();
 			} else {				
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(locField.getText()), locField.getText());
+				addIcon(fatManager.getFATList(recentPath), recentPath);
 				refreshFATTable();
+				//System.out.println(fatManager.getFAT(no).getObject().toString());
 			}			
 		});
 		
 		createFolderItem.setOnAction(ActionEvent -> {
-			int no = fatManager.createFolder(locField.getText());
+			int no = fatManager.createFolder(recentPath);
 			if (no == Utility.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
@@ -175,7 +179,7 @@ public class MainView {
 				Folder newFolder = (Folder)fatManager.getFAT(no).getObject();
 				Path newPath = newFolder.getPath();
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(locField.getText()), locField.getText());
+				addIcon(fatManager.getFATList(recentPath), recentPath);
 				refreshFATTable();
 				addNode(recentNode, newPath);
 			}
@@ -220,7 +224,7 @@ public class MainView {
 			} else {
 				new delView(thisFAT, fatManager, MainView.this);
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(locField.getText()), locField.getText());
+				addIcon(fatManager.getFATList(recentPath), recentPath);
 				refreshFATTable();
 			}			
 		});
@@ -241,9 +245,13 @@ public class MainView {
 	
 	private void initTopBox() {
 		locLabel = new Label("当前目录：");	
+		locLabel.setStyle("-fx-font-weight: bold;"
+				+ "-fx-font-size: 16px");
+		
 		locField = new TextField("C:");
 		locField.setPrefWidth(400);
-		backButton = new Button("后退");
+		
+		backButton = new Button();
 		backButton.setOnAction(ActionEvent -> {
 			System.out.println(recentPath);
 			Path backPath = fatManager.getPath(recentPath).getParent();
@@ -256,7 +264,26 @@ public class MainView {
 				locField.setText(recentPath);
 			}
 		});
-		gotoButton = new Button("前往");
+		backButton.setGraphic(new ImageView(Utility.backImg));
+		backButton.setStyle("-fx-background-color: #ffffff;");
+		backButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				// TODO Auto-generated method stub
+				backButton.setStyle("-fx-background-color: #1e90ff;");
+			}
+		});
+		backButton.setOnMouseExited(new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				// TODO Auto-generated method stub
+				backButton.setStyle("-fx-background-color: #ffffff;");
+			}
+		});
+		
+		gotoButton = new Button();
 		gotoButton.setOnAction(ActionEvent -> {
 			String textPath = locField.getText();
 			Path gotoPath = fatManager.getPath(textPath);
@@ -271,26 +298,48 @@ public class MainView {
 				alert.setContentText("目录不存在");
 				alert.setHeaderText(null);
 				alert.show();
+				locField.setText(recentPath);
 			}			
 		});
+		gotoButton.setGraphic(new ImageView(Utility.forwardImg));
+		gotoButton.setStyle("-fx-background-color: #ffffff;");
+		gotoButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				// TODO Auto-generated method stub
+				gotoButton.setStyle("-fx-background-color: #1e90ff;");
+			}
+		});
+		gotoButton.setOnMouseExited(new EventHandler<MouseEvent>() {
+
+			@Override
+			public void handle(MouseEvent event) {
+				// TODO Auto-generated method stub
+				gotoButton.setStyle("-fx-background-color: #ffffff;");
+			}
+		});
+		
 		locBox = new HBox(backButton, locLabel, locField, gotoButton);	
 		locBox.setStyle("-fx-background-color: #ffffff;"
-				+ "-fx-border-color: #d3d3d3;");
+				+ "-fx-border-color: #d3d3d3;"
+				+ "-fx-border-width:0.5px;");
 		locBox.setSpacing(10);
 		locBox.setPadding(new Insets(5, 5, 5, 5));
 		
-		exItem = new MenuItem("退出");
-		exItem.setOnAction(ActionEvent -> Platform.exit());
-		startMenu = new Menu("开始", null, exItem);
-		menuBar = new MenuBar(startMenu);
-		menuBar.setPadding(new Insets(0));
-		vBox = new VBox(locBox, menuBar);
 	}
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void initTables() {
 		fatTable = new TableView<FAT>();
 		openedTable = new TableView<OpenedFile>();
+		
+		fatTable.setStyle("-fx-background-color: #ffffff;"
+				+ "-fx-border-color: #d3d3d3;"
+				+ "-fx-border-width:0.5px;");
+		openedTable.setStyle("-fx-background-color: #ffffff;"
+				+ "-fx-border-color: #d3d3d3;"
+				+ "-fx-border-width:0.5px;");
 				
 		dataFAT = FXCollections.observableArrayList(fatManager.getFATs());
 		dataOpened = FXCollections.observableArrayList(fatManager.getOpenedFiles());
@@ -320,34 +369,42 @@ public class MainView {
 	    objCol.setCellValueFactory(
 	    		new PropertyValueFactory("object"));
 	    objCol.setSortable(false);
-	    objCol.setMinWidth(135);
+	    objCol.setMinWidth(133);
 	    objCol.setResizable(false);
+	    
+	    
 	    
 	    TableColumn nameCol = new TableColumn("文件名");
 	    nameCol.setCellValueFactory(
 	    		new PropertyValueFactory("fileName"));
 	    nameCol.setSortable(false);
+	    nameCol.setMinWidth(156);
+	    nameCol.setResizable(false);
 	    
 	    TableColumn flagCol = new TableColumn("打开方式");
 	    flagCol.setCellValueFactory(
 	    		new PropertyValueFactory("flag"));
 	    flagCol.setSortable(false);
+	    flagCol.setResizable(false);
 	    
 	    TableColumn diskCol = new TableColumn("起始盘块号");
 	    diskCol.setCellValueFactory(
 	    		new PropertyValueFactory("diskNum"));
 	    diskCol.setSortable(false);
+	    diskCol.setResizable(false);
 	    
 	    TableColumn pathCol = new TableColumn("路径");
 	    pathCol.setCellValueFactory(
 	    		new PropertyValueFactory("path"));
 	    pathCol.setSortable(false);
 	    pathCol.setMinWidth(500);
-	    
+	    pathCol.setResizable(false);
+	    	    
 	    TableColumn lengthCol = new TableColumn("文件长度");
 	    lengthCol.setCellValueFactory(
 	    		new PropertyValueFactory("length"));
 	    lengthCol.setSortable(false);
+	    lengthCol.setResizable(false);
 	    
 	    fatTable.setItems(dataFAT);        
 	    fatTable.getColumns().addAll(noCol, indexCol, typeCol, objCol);
@@ -360,9 +417,7 @@ public class MainView {
 	}
 	
 	private void initTreeView() {
-		rootImg.setFitWidth(16);
-        rootImg.setFitHeight(16);
-        rootNode = new TreeItem<>("C:",rootImg);
+        rootNode = new TreeItem<>("C:",new ImageView(Utility.diskImg));
         rootNode.setExpanded(true);
         
         recentNode = rootNode;
@@ -371,21 +426,23 @@ public class MainView {
         treeView = new TreeView<String>(rootNode);
         treeView.setPrefWidth(200);
         treeView.setCellFactory((TreeView<String> p) -> new TextFieldTreeCellImpl());
+        treeView.setStyle("-fx-background-color: #ffffff;"
+				+ "-fx-border-color: #d3d3d3;"
+				+ "-fx-border-width:0.5px;");
 	}
 	
 	private void addIcon(List<FAT> fList, String path) {
 		fatList = fList;
 		int n = fList.size();
-		//flowPane.setPrefSize(482, Utility.getHeight(n));
 		icons = new Label[n];
 		for (int i = 0; i < n; i++) {
 			if (fList.get(i).getIndex() == Utility.END){
 				if (fList.get(i).getObject() instanceof Folder){
 					icons[i] = new Label(((Folder)fList.get(i).getObject()).getFolderName(),
-							new ImageView(Utility.folderPath));
+							new ImageView(Utility.folderImg));
 				} else {
 					icons[i] = new Label(((File)fList.get(i).getObject()).getFileName(),
-							new ImageView(Utility.filePath));
+							new ImageView(Utility.fileImg));
 				}
 				icons[i].setContentDisplay(ContentDisplay.TOP);
 				icons[i].setWrapText(true);
@@ -462,7 +519,8 @@ public class MainView {
 	public void addNode(TreeItem<String> parentNode, Path newPath) {
 		String pathName = newPath.getPathName();
 		String value = pathName.substring(pathName.lastIndexOf('\\') + 1);
-		TreeItem<String> newNode = new TreeItem<String>(value);
+		TreeItem<String> newNode = new TreeItem<String>(value,
+				new ImageView(Utility.treeNodeImg));
 		newNode.setExpanded(true);
 		pathMap.put(newPath, newNode);
 		parentNode.getChildren().add(newNode);
@@ -505,24 +563,27 @@ public class MainView {
 					// TODO Auto-generated method stub
 					if (event.getButton() == MouseButton.PRIMARY &&
 							event.getClickCount() == 1) {
-						String pathName = null;
-						for (Map.Entry<Path, TreeItem<String>> entry :
-							pathMap.entrySet()) {
-	        				if (getTreeItem() == entry.getValue()) {
-	        					pathName = entry.getKey().getPathName();
-	        					break;
-	        				}
-	        			}
-	    				List<FAT> fats = fatManager.getFATList(pathName);
-	    				flowPane.getChildren().removeAll(flowPane.getChildren());
-	    				addIcon(fats, pathName);
-	    				recentPath = pathName;
-	    				recentNode = getTreeItem();
-	    				locField.setText(recentPath);
-					}					
+						if (getTreeItem() != null) {
+							String pathName = null;
+							for (Map.Entry<Path, TreeItem<String>> entry :
+								pathMap.entrySet()) {
+								if (getTreeItem() == entry.getValue()) {
+									pathName = entry.getKey().getPathName();
+									break;
+								}
+							}
+							List<FAT> fats = fatManager.getFATList(pathName);
+							flowPane.getChildren().removeAll(flowPane.getChildren());
+							addIcon(fats, pathName);
+							recentPath = pathName;
+							recentNode = getTreeItem();
+							locField.setText(recentPath);
+						}						
+					}			
 				}
-	        	
 			});
+//	        this.setStyle("-fx-background-color: #ffffff;"
+//	        		+ "-fx-font-weight: bold;");
 	    }
 
 	    @Override

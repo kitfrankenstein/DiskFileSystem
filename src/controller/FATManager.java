@@ -437,5 +437,15 @@ public class FATManager {
 		}
 		return false;
 	}
+	
+	public boolean hasName(String path, String name) {
+		Folder thisFolder = getFolder(path);
+		for (Object child : thisFolder.getChildren()) {
+			if (child.toString().equals(name)) {
+				return true;
+			}
+		}		
+		return false;
+	}
 
 }

@@ -36,21 +36,27 @@ public class delView {
 		if (fat.getObject() instanceof Folder) {
 			Folder folder = (Folder)fat.getObject();
 			mesg = folder.getFolderName()
-					+ "\n类型:" + folder.getType()
-					+ "\n大小:" + folder.getSize()
-					+ "\n创建时间:" + folder.getCreateTime();
+					+ "\n类型: " + folder.getType()
+					+ "\n大小: " + folder.getSize()
+					+ "\n创建时间: " + folder.getCreateTime();
 		} else {
 			File file = (File)fat.getObject();
 			mesg = file.getFileName()
-					+ "\n类型:" + file.getType()
-					+ "\n大小:" + file.getSize() + "KB"
-					+ "\n创建时间:" + file.getCreateTime();
+					+ "\n类型: " + file.getType()
+					+ "\n大小: " + file.getSize() + "KB"
+					+ "\n创建时间: " + file.getCreateTime();
 		}
 		mainAlert = new Alert(AlertType.CONFIRMATION);
 		mainAlert.setHeaderText("确认删除");
 		mainAlert.setContentText(mesg);
+		
 		okAlert = new Alert(AlertType.INFORMATION);
+		okAlert.setTitle("成功");
+		okAlert.setHeaderText(null);
+		
 		errAlert = new Alert(AlertType.ERROR);
+		errAlert.setHeaderText(null);
+		
 		showAlert();
 	}
 	
@@ -64,20 +70,16 @@ public class delView {
 			}
 			int res = fatManager.delete(fat);
 			if (res == 0) {//删除文件夹成功
-				mainView.removeNode(mainView.getRecentNode(), thisPath);								
-				okAlert.setHeaderText(null);
+				mainView.removeNode(mainView.getRecentNode(), thisPath);												
 				okAlert.setContentText("删除文件夹成功");
 				okAlert.show();
 			} else if (res == 1) {
-				okAlert.setHeaderText(null);
 				okAlert.setContentText("删除文件成功");
 				okAlert.show();
 			} else if (res == 2) {//文件夹不为空
-				errAlert.setHeaderText(null);
 				errAlert.setHeaderText("文件夹不为空");
 				errAlert.show();
 			} else {//文件未关闭				
-				errAlert.setHeaderText(null);
 				errAlert.setHeaderText("文件未关闭");
 				errAlert.show();
 			}
