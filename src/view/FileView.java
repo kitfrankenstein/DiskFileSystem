@@ -2,7 +2,8 @@ package view;
 
 import java.util.Optional;
 
-import controller.FATManager;
+import controller.FAT;
+import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -16,9 +17,10 @@ import javafx.scene.control.MenuBar;
 import javafx.scene.control.MenuItem;
 import javafx.scene.control.TextArea;
 import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
-import model.FAT;
+import model.DiskBlock;
 import model.File;
 import model.Folder;
 import model.Utility;
@@ -31,8 +33,8 @@ import model.Utility;
 public class FileView {
 
 	private File file;
-	private FATManager fatManager;
 	private FAT fat;
+	private DiskBlock block;
 	private MainView mainView;
 	private String newContent, oldContent;
 	private Stage stage;
@@ -43,22 +45,23 @@ public class FileView {
 	private Menu fileMenu;
 	private MenuItem saveItem, closeItem;
 
-	public FileView(File file, FATManager fatManager, FAT fat, MainView mainView) {
+	public FileView(File file, FAT fat, DiskBlock block, MainView mainView) {
 		this.file = file;
-		this.fatManager = fatManager;
 		this.fat = fat;
+		this.block = block;
 		this.mainView = mainView;
 		showView();
 	}
 
 	private void showView() {
-		System.out.println(file.getParent());
+		//System.out.println(file.getParent());
 		contentField = new TextArea();
 		contentField.setPrefRowCount(25);
 		contentField.setWrapText(true);
 		contentField.setText(file.getContent());
 
 		saveItem = new MenuItem("保存");
+		saveItem.setGraphic(new ImageView(Utility.saveImg));
 		saveItem.setOnAction(ActionEvent -> {
 			newContent = contentField.getText();
 			oldContent = file.getContent();
@@ -69,8 +72,11 @@ public class FileView {
 				saveContent(newContent);
 			}
 		});
+		
 		closeItem = new MenuItem("关闭");
-		closeItem.setOnAction(ActionEvent -> stage.close());
+		closeItem.setGraphic(new ImageView(Utility.closeImg));
+		closeItem.setOnAction(ActionEvent -> onClose(ActionEvent));		
+		
 		fileMenu = new Menu("File", null, saveItem, closeItem);
 		menuBar = new MenuBar(fileMenu);
 		menuBar.setPadding(new Insets(0));
@@ -87,44 +93,48 @@ public class FileView {
 			@Override
 			public void handle(WindowEvent event) {
 				// TODO Auto-generated method stub
-				newContent = contentField.getText();
-				oldContent = file.getContent();
-				boolean isCancel = false;
-				if (newContent == null) {
-					newContent = "";
-				}
-				System.out.println(newContent + " newContent");
-				if (!newContent.equals(oldContent)) {
-					event.consume();
-					Alert alert = new Alert(AlertType.CONFIRMATION);
-					alert.setTitle("保存更改");
-					alert.setHeaderText(null);
-					alert.setContentText("文件内容已更改，是否保存?");
-					ButtonType saveType = new ButtonType("保存");
-					ButtonType noType = new ButtonType("不保存");
-					ButtonType cancelType = new ButtonType("取消", ButtonData.CANCEL_CLOSE);
-					alert.getButtonTypes().setAll(saveType, noType, cancelType);
-					Optional<ButtonType> result = alert.showAndWait();
-					if (result.get() == saveType) {
-						saveContent(newContent);
-					} else if (result.get() == cancelType) {
-						isCancel = true;
-					}
-				}
-				if (!isCancel) {
-					fatManager.removeOpenedFile(fat);
-					mainView.refreshOpenedTable();
-					stage.close();
-				}
+				onClose(event);
 			}
 		});
 		stage.show();
 	}
 
+	private void onClose(Event event) {
+		newContent = contentField.getText();
+		oldContent = file.getContent();
+		boolean isCancel = false;
+		if (newContent == null) {
+			newContent = "";
+		}
+		System.out.println(newContent + " newContent");
+		if (!newContent.equals(oldContent)) {
+			event.consume();
+			Alert alert = new Alert(AlertType.CONFIRMATION);
+			alert.setTitle("保存更改");
+			alert.setHeaderText(null);
+			alert.setContentText("文件内容已更改，是否保存?");
+			ButtonType saveType = new ButtonType("保存");
+			ButtonType noType = new ButtonType("不保存");
+			ButtonType cancelType = new ButtonType("取消", ButtonData.CANCEL_CLOSE);
+			alert.getButtonTypes().setAll(saveType, noType, cancelType);
+			Optional<ButtonType> result = alert.showAndWait();
+			if (result.get() == saveType) {
+				saveContent(newContent);
+			} else if (result.get() == cancelType) {
+				isCancel = true;
+			}
+		}
+		if (!isCancel) {
+			fat.removeOpenedFile(block);
+			mainView.refreshOpenedTable();
+			stage.close();
+		}
+	}
+	
 	private void saveContent(String newContent) {
 		int newLength = newContent.length();
-		int FATcount = Utility.getNumOfFAT(newLength);
-		file.setLength(FATcount);
+		int blockCount = Utility.getNumOfBlocks(newLength);
+		file.setLength(blockCount);
 		file.setContent(newContent);
 		file.setSize(Utility.getSize(newLength));
 		if (file.hasParent()) {
@@ -135,9 +145,9 @@ public class FileView {
 				parent.setSize(Utility.getFolderSize(parent));
 			}
 		}
-		fatManager.reallocFAT(FATcount, fat);
-		mainView.refreshFATTable();
+		fat.reallocBlocks(blockCount, block);
+		mainView.refreshBlockTable();
 		mainView.refreshOpenedTable();
 	}
-
+	
 }

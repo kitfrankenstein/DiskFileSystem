@@ -3,7 +3,7 @@ package controller;
 import java.util.ArrayList;
 import java.util.List;
 
-import model.FAT;
+import model.DiskBlock;
 import model.File;
 import model.Folder;
 import model.OpenedFile;
@@ -15,21 +15,22 @@ import model.Utility;
  * @version: 2018年9月25日 下午11:39:46
  * 
  */
-public class FATManager {
+public class FAT {
 
-	private FAT[] FATs;
+	private DiskBlock[] diskBlocks;
 	private List<OpenedFile> openedFiles;
 	private Folder c;
 	private Path rootPath = new Path("C:", null);
 	private List<Path> paths;
 
-	public FATManager() {
+	public FAT() {
 		c = new Folder("C:", "root", 0, null);
-		FATs = new FAT[128];
-		FATs[0] = new FAT(0, Utility.END, Utility.DISK, c);
-		FATs[1] = new FAT(1, Utility.END, Utility.DISK, c);
+		diskBlocks = new DiskBlock[128];
+		diskBlocks[0] = new DiskBlock(0, Utility.END, Utility.DISK, c);
+		diskBlocks[0].setBegin(true);
+		diskBlocks[1] = new DiskBlock(1, Utility.END, Utility.DISK, c);
 		for (int i = 2; i < 128; i++) {
-			FATs[i] = new FAT(i, Utility.FREE, Utility.EMPTY, null);
+			diskBlocks[i] = new DiskBlock(i, Utility.FREE, Utility.EMPTY, null);
 		}
 		openedFiles = new ArrayList<OpenedFile>();
 		paths = new ArrayList<Path>();
@@ -37,15 +38,15 @@ public class FATManager {
 		c.setPath(rootPath);
 	}
 
-	public void addOpenedFile(FAT fat, int flag) {
-		File thisFile = (File) fat.getObject();
+	public void addOpenedFile(DiskBlock block, int flag) {
+		File thisFile = (File) block.getObject();
 		OpenedFile openedFile = new OpenedFile(thisFile, flag);
 		openedFiles.add(openedFile);
 		thisFile.setOpenedFile(openedFile);
 	}
 
-	public void removeOpenedFile(FAT fat) {
-		File thisFile = (File) fat.getObject();
+	public void removeOpenedFile(DiskBlock block) {
+		File thisFile = (File) block.getObject();
 		for (int i = 0; i < openedFiles.size(); i++) {
 			if (openedFiles.get(i).getFile() == thisFile) {
 				openedFiles.remove(i);
@@ -55,11 +56,11 @@ public class FATManager {
 		}
 	}
 
-	public boolean isOpenedFile(FAT fat) {
-		if (fat.getObject() instanceof Folder) {
+	public boolean isOpenedFile(DiskBlock block) {
+		if (block.getObject() instanceof Folder) {
 			return false;
 		}
-		return ((File) fat.getObject()).isOpened();
+		return ((File) block.getObject()).isOpened();
 	}
 
 	/**
@@ -73,13 +74,13 @@ public class FATManager {
 		int index = 1;
 		// 得到文件夹名
 		do {
-			folderName = "新建文件夹";
+			folderName = "文件夹";
 			canName = true;
 			folderName += index;
-			for (int i = 2; i < FATs.length; i++) {
-				if (!FATs[i].isFree()) {
-					if (FATs[i].getType() == Utility.FOLDER) {
-						Folder folder = (Folder) FATs[i].getObject();
+			for (int i = 2; i < diskBlocks.length; i++) {
+				if (!diskBlocks[i].isFree()) {
+					if (diskBlocks[i].getType() == Utility.FOLDER) {
+						Folder folder = (Folder) diskBlocks[i].getObject();
 						if (path.equals(folder.getLocation())) {
 							if (folderName.equals(folder.getFolderName())) {
 								canName = false;
@@ -90,7 +91,7 @@ public class FATManager {
 			}
 			index++;
 		} while (!canName);
-		int index2 = searchEmptyFromMyFAT();
+		int index2 = searchEmptyDiskBlock();
 		if (index2 == Utility.ERROR) {
 			return Utility.ERROR;
 		} else {
@@ -99,7 +100,7 @@ public class FATManager {
 			if (parent instanceof Folder) {
 				parent.addChildren(folder);
 			}
-			FATs[index2].allocFAT(Utility.END, Utility.FOLDER, folder);
+			diskBlocks[index2].allocBlock(Utility.END, Utility.FOLDER, folder, true);
 			Path parentP = getPath(path);
 			Path thisPath = new Path(path + "\\" + folderName, parentP);
 			if (parentP != null) {
@@ -122,13 +123,13 @@ public class FATManager {
 		int index = 1;
 		// 得到文件名
 		do {
-			fileName = "新建文件";
+			fileName = "文件";
 			canName = true;
 			fileName += index;
-			for (int i = 2; i < FATs.length; i++) {
-				if (!FATs[i].isFree()) {
-					if (FATs[i].getType() == Utility.FILE) {
-						File file = (File) FATs[i].getObject();
+			for (int i = 2; i < diskBlocks.length; i++) {
+				if (!diskBlocks[i].isFree()) {
+					if (diskBlocks[i].getType() == Utility.FILE) {
+						File file = (File) diskBlocks[i].getObject();
 						if (path.equals(file.getLocation())) {
 							if (fileName.equals(file.getFileName())) {
 								canName = false;
@@ -139,7 +140,7 @@ public class FATManager {
 			}
 			index++;
 		} while (!canName);
-		int index2 = searchEmptyFromMyFAT();
+		int index2 = searchEmptyDiskBlock();
 		if (index2 == Utility.ERROR) {
 			return Utility.ERROR;
 		} else {
@@ -148,35 +149,35 @@ public class FATManager {
 			if (parent instanceof Folder) {
 				parent.addChildren(file);
 			}
-			FATs[index2].allocFAT(Utility.END, Utility.FILE, file);
+			diskBlocks[index2].allocBlock(Utility.END, Utility.FILE, file, true);
 		}
 		return index2;
 	}
 
 	// 得到第一个为空的磁盘块
-	public int searchEmptyFromMyFAT() {
-		for (int i = 2; i < FATs.length; i++) {
-			if (FATs[i].isFree()) {
+	public int searchEmptyDiskBlock() {
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (diskBlocks[i].isFree()) {
 				return i;
 			}
 		}
 		return Utility.ERROR;
 	}
 
-	public int getNumOfFAT() {
+	public int numOfUsedBlocks() {
 		int n = 0;
-		for (int i = 2; i < FATs.length; i++) {
-			if (!FATs[i].isFree()) {
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (!diskBlocks[i].isFree()) {
 				n++;
 			}
 		}
 		return n;
 	}
 
-	public int getSpaceOfFAT() {
+	public int numOfFreeBlocks() {
 		int n = 0;
-		for (int i = 2; i < FATs.length; i++) {
-			if (FATs[i].isFree()) {
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (diskBlocks[i].isFree()) {
 				n++;
 			}
 		}
@@ -184,52 +185,53 @@ public class FATManager {
 	}
 
 	// 保存数据时重新分配磁盘
-	public boolean reallocFAT(int num, FAT fat) {
+	public boolean reallocBlocks(int num, DiskBlock block) {
 		// 从哪片磁盘开始
-		File thisFile = (File) fat.getObject();
+		File thisFile = (File) block.getObject();
 		int begin = thisFile.getDiskNum();
-		int index = FATs[begin].getIndex();
+		int index = diskBlocks[begin].getIndex();
 		int oldNum = 1;
 		while (index != Utility.END) {
 			oldNum++;
-			if (FATs[index].getIndex() == Utility.END) {
+			if (diskBlocks[index].getIndex() == Utility.END) {
 				begin = index;
 			}
-			index = FATs[index].getIndex();
+			index = diskBlocks[index].getIndex();
 		}
 
 		if (num > oldNum) {
 			// 增加磁盘块
 			int n = num - oldNum;
-			if (this.getSpaceOfFAT() < n) {
+			if (numOfFreeBlocks() < n) {
 				// 超过磁盘容量
 				return false;
 			}
-			int space = this.searchEmptyFromMyFAT();
-			FATs[begin].setIndex(space);
+			int space = searchEmptyDiskBlock();
+			diskBlocks[begin].setIndex(space);
 			for (int i = 1; i <= n; i++) {
-				space = this.searchEmptyFromMyFAT();
+				space = searchEmptyDiskBlock();
 				if (i == n) {
-					FATs[space].allocFAT(Utility.END, Utility.FILE, thisFile);
+					diskBlocks[space].allocBlock(Utility.END, Utility.FILE, thisFile, false);
 				} else {
-					FATs[space].allocFAT(Utility.END, Utility.FILE, thisFile);// 同一个文件的所有磁盘块拥有相同的对象
-					int space2 = this.searchEmptyFromMyFAT();
-					FATs[space].setIndex(space2);
+					diskBlocks[space].allocBlock(Utility.END, Utility.FILE, thisFile, false);// 同一个文件的所有磁盘块拥有相同的对象
+					int space2 = searchEmptyDiskBlock();
+					diskBlocks[space].setIndex(space2);
 				}
+				System.out.println(thisFile);
 			}
 		} else if (num < oldNum) {
 			// 减少磁盘块
 			int end = thisFile.getDiskNum();
 			while (num > 1) {
-				end = FATs[end].getIndex();
+				end = diskBlocks[end].getIndex();
 				num--;
 			}
 			int next = 0;
-			for (int i = FATs[end].getIndex(); i != Utility.END; i = next) {
-				next = FATs[i].getIndex();
-				FATs[i].clearFAT();
+			for (int i = diskBlocks[end].getIndex(); i != Utility.END; i = next) {
+				next = diskBlocks[i].getIndex();
+				diskBlocks[i].clearBlock();
 			}
-			FATs[end].setIndex(Utility.END);
+			diskBlocks[end].setIndex(Utility.END);
 		} else {
 			// 不变
 		}
@@ -239,11 +241,11 @@ public class FATManager {
 
 	public List<Folder> getFolders(String path) {
 		List<Folder> list = new ArrayList<Folder>();
-		for (int i = 2; i < FATs.length; i++) {
-			if (!FATs[i].isFree()) {
-				if (FATs[i].getObject() instanceof Folder) {
-					if (((Folder) (FATs[i].getObject())).getLocation().equals(path)) {
-						list.add((Folder) FATs[i].getObject());
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (!diskBlocks[i].isFree()) {
+				if (diskBlocks[i].getObject() instanceof Folder) {
+					if (((Folder) (diskBlocks[i].getObject())).getLocation().equals(path)) {
+						list.add((Folder) diskBlocks[i].getObject());
 					}
 				}
 			}
@@ -253,11 +255,11 @@ public class FATManager {
 
 	public List<File> getFiles(String path) {
 		List<File> list = new ArrayList<File>();
-		for (int i = 2; i < FATs.length; i++) {
-			if (!FATs[i].isFree()) {
-				if (FATs[i].getObject() instanceof File) {
-					if (((File) (FATs[i].getObject())).getLocation().equals(path)) {
-						list.add((File) FATs[i].getObject());
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (!diskBlocks[i].isFree()) {
+				if (diskBlocks[i].getObject() instanceof File) {
+					if (((File) (diskBlocks[i].getObject())).getLocation().equals(path)) {
+						list.add((File) diskBlocks[i].getObject());
 					}
 				}
 			}
@@ -265,29 +267,29 @@ public class FATManager {
 		return list;
 	}
 
-	public List<FAT> getFATList(String path) {
-		List<FAT> fList = new ArrayList<FAT>();
-		for (int i = 2; i < FATs.length; i++) {
-			if (!FATs[i].isFree()) {
-				if (FATs[i].getObject() instanceof Folder) {
-					if (((Folder) (FATs[i].getObject())).getLocation().equals(path)
-							&& FATs[i].getIndex() == Utility.END) {
-						fList.add(FATs[i]);
+	public List<DiskBlock> getBlockList(String path) {
+		List<DiskBlock> bList = new ArrayList<DiskBlock>();
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (!diskBlocks[i].isFree()) {
+				if (diskBlocks[i].getObject() instanceof Folder) {
+					if (((Folder) (diskBlocks[i].getObject())).getLocation().equals(path)
+							&& diskBlocks[i].isBegin()) {
+						bList.add(diskBlocks[i]);
 					}
 				}
 			}
 		}
-		for (int i = 2; i < FATs.length; i++) {
-			if (!FATs[i].isFree()) {
-				if (FATs[i].getObject() instanceof File) {
-					if (((File) (FATs[i].getObject())).getLocation().equals(path)
-							&& FATs[i].getIndex() == Utility.END) {
-						fList.add(FATs[i]);
+		for (int i = 2; i < diskBlocks.length; i++) {
+			if (!diskBlocks[i].isFree()) {
+				if (diskBlocks[i].getObject() instanceof File) {
+					if (((File) (diskBlocks[i].getObject())).getLocation().equals(path)
+							&& diskBlocks[i].isBegin()) {
+						bList.add(diskBlocks[i]);
 					}
 				}
 			}
 		}
-		return fList;
+		return bList;
 	}
 
 	/**
@@ -323,15 +325,15 @@ public class FATManager {
 
 	/**
 	 * 
-	 * @param fat
+	 * @param block
 	 */
-	public int delete(FAT fat) {
-		if (fat.getType() == Utility.FILE) {
-			if (isOpenedFile(fat)) {
+	public int delete(DiskBlock block) {
+		if (block.getObject() instanceof File) {
+			if (isOpenedFile(block)) {
 				// 文件正打开着，不能删除
 				return 3;
 			}
-			File thisFile = (File) fat.getObject();
+			File thisFile = (File) block.getObject();
 			Folder parent = thisFile.getParent();
 			if (parent instanceof Folder) {
 				parent.removeChildren(thisFile);
@@ -341,22 +343,24 @@ public class FATManager {
 					parent.setSize(Utility.getFolderSize(parent));
 				}
 			}
-			for (int i = 2; i < FATs.length; i++) {
-				if (!FATs[i].isFree() && FATs[i].getType() == Utility.FILE) {
-					if (((File) FATs[i].getObject()).equals(fat.getObject())) {// 同一个对象
-						FATs[i].clearFAT();
+			for (int i = 2; i < diskBlocks.length; i++) {
+				if (!diskBlocks[i].isFree() && diskBlocks[i].getObject() instanceof File) {
+					System.out.println("yes");
+					if (((File) diskBlocks[i].getObject()).equals(thisFile)) {// 同一个对象
+						System.out.println("yes2");
+						diskBlocks[i].clearBlock();
 					}
 				}
 			}
 			return 1;
 		} else {
-			String folderPath = ((Folder) fat.getObject()).getLocation() + "\\"
-					+ ((Folder) fat.getObject()).getFolderName();
+			String folderPath = ((Folder) block.getObject()).getLocation() + "\\"
+					+ ((Folder) block.getObject()).getFolderName();
 			int index = 0;
-			for (int i = 2; i < FATs.length; i++) {
-				if (!FATs[i].isFree()) {
-					Object obj = FATs[i].getObject();
-					if (FATs[i].getType() == Utility.FOLDER) {
+			for (int i = 2; i < diskBlocks.length; i++) {
+				if (!diskBlocks[i].isFree()) {
+					Object obj = diskBlocks[i].getObject();
+					if (diskBlocks[i].getType() == Utility.FOLDER) {
 						if (((Folder) obj).getLocation().equals(folderPath)) {
 							// 文件夹不为空，不能删除
 							return 2;
@@ -367,35 +371,35 @@ public class FATManager {
 							return 2;
 						}
 					}
-					if (FATs[i].getType() == Utility.FOLDER) {
-						if (((Folder) FATs[i].getObject()).equals(fat.getObject())) {
+					if (diskBlocks[i].getType() == Utility.FOLDER) {
+						if (((Folder) diskBlocks[i].getObject()).equals(block.getObject())) {
 							index = i;
 						}
 					}
 				}
 			}
-			Folder thisFolder = (Folder) fat.getObject();
+			Folder thisFolder = (Folder) block.getObject();
 			Folder parent = thisFolder.getParent();
 			if (parent instanceof Folder) {
 				parent.removeChildren(thisFolder);
 				parent.setSize(Utility.getFolderSize(parent));
 			}
 			paths.remove(getPath(folderPath));
-			FATs[index].clearFAT();
+			diskBlocks[index].clearBlock();
 			return 0;
 		}
 	}
 
-	public FAT[] getFATs() {
-		return FATs;
+	public DiskBlock[] getDiskBlocks() {
+		return diskBlocks;
 	}
 
-	public void setFATs(FAT[] FATs) {
-		this.FATs = FATs;
+	public void setDiskBlocks(DiskBlock[] diskBlocks) {
+		this.diskBlocks = diskBlocks;
 	}
 
-	public FAT getFAT(int index) {
-		return FATs[index];
+	public DiskBlock getBlock(int index) {
+		return diskBlocks[index];
 	}
 
 	public List<OpenedFile> getOpenedFiles() {

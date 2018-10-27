@@ -1,6 +1,6 @@
 package view;
 
-import model.FAT;
+import model.DiskBlock;
 import model.File;
 import model.Folder;
 import model.OpenedFile;
@@ -11,7 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import controller.FATManager;
+import controller.FAT;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
@@ -49,9 +49,9 @@ import javafx.stage.Stage;
 */
 public class MainView {
 
-	private FATManager fatManager;
+	private FAT fat;
 	private int index;
-	private List<FAT> fatList;
+	private List<DiskBlock> blockList;
 	private String recentPath;
 	private Map<Path, TreeItem<String>> pathMap;
 	
@@ -71,9 +71,9 @@ public class MainView {
 	private TreeView<String> treeView;
 	private TreeItem<String> rootNode, recentNode;
 	
-	private TableView<FAT> fatTable;
+	private TableView<DiskBlock> blockTable;
 	private TableView<OpenedFile> openedTable;
-	private ObservableList<FAT> dataFAT;
+	private ObservableList<DiskBlock> dataBlock;
 	private ObservableList<OpenedFile> dataOpened;
 	
 	private ContextMenu contextMenu, contextMenu2; 
@@ -81,7 +81,7 @@ public class MainView {
 						renameItem, delItem, propItem;
 	
 	public MainView(Stage stage) {
-		fatManager = new FATManager();
+		fat = new FAT();
 		pathMap = new HashMap<Path, TreeItem<String>>();
 		recentPath = "C:";
 		initFrame(stage);
@@ -125,7 +125,7 @@ public class MainView {
 //        
 //        scene = new Scene(borderPane);
 		
-		workBox = new HBox(flowPane, fatTable);
+		workBox = new HBox(flowPane, blockTable);
 		rightBox = new VBox(workBox, openedTable);
 		mainBox = new HBox(treeView, rightBox);
 		fullBox = new VBox(locBox, mainBox);
@@ -135,7 +135,7 @@ public class MainView {
         //scene.setFill(Color.TRANSPARENT);
         stage.setScene(scene);
         stage.setResizable(false);
-        stage.getIcons().add(new Image(Utility.diskImg));
+        stage.getIcons().add(new Image(Utility.ico));
         stage.setTitle("模拟磁盘文件系统");
         stage.show();
 	}
@@ -156,88 +156,88 @@ public class MainView {
 	
 	private void menuItemSetOnAction() {
 		createFileItem.setOnAction(ActionEvent -> {
-			int no = fatManager.createFile(recentPath);
+			int no = fat.createFile(recentPath);
 			if (no == Utility.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
 				alert.showAndWait();
 			} else {				
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(recentPath), recentPath);
-				refreshFATTable();
+				addIcon(fat.getBlockList(recentPath), recentPath);
+				refreshBlockTable();
 				//System.out.println(fatManager.getFAT(no).getObject().toString());
 			}			
 		});
 		
 		createFolderItem.setOnAction(ActionEvent -> {
-			int no = fatManager.createFolder(recentPath);
+			int no = fat.createFolder(recentPath);
 			if (no == Utility.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
 				alert.showAndWait();
 			} else {
-				Folder newFolder = (Folder)fatManager.getFAT(no).getObject();
+				Folder newFolder = (Folder)fat.getBlock(no).getObject();
 				Path newPath = newFolder.getPath();
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(recentPath), recentPath);
-				refreshFATTable();
+				addIcon(fat.getBlockList(recentPath), recentPath);
+				refreshBlockTable();
 				addNode(recentNode, newPath);
 			}
 		});
 		
-		openItem.setOnAction(ActionEvent -> {
-			FAT thisFAT = fatList.get(index);
-			if (thisFAT.getObject() instanceof File) {
-				if (fatManager.getOpenedFiles().size() < Utility.num) {
-					if (fatManager.isOpenedFile(thisFAT)) {
-						Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
-						duplicate.showAndWait();
-					} else {
-						fatManager.addOpenedFile(thisFAT, Utility.flagWrite);
-						refreshOpenedTable();
-						new FileView((File)thisFAT.getObject(),
-								fatManager, thisFAT, MainView.this);						
-					}
-				} else {
-					Alert exceed = new Alert(AlertType.ERROR, "文件打开已到上限");
-					exceed.showAndWait();
-				}								
-			} else {
-				Folder thisFolder = (Folder)thisFAT.getObject();
-				String newPath = thisFolder.getLocation() +
-						"\\" + thisFolder.getFolderName();
-				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(newPath), newPath);
-				locField.setText(newPath);
-				recentPath = newPath;
-				recentNode = pathMap.get(thisFolder.getPath());
-			}
-		});
+		openItem.setOnAction(ActionEvent -> onOpen());
+//			DiskBlock thisBlock = blockList.get(index);
+//			if (thisBlock.getObject() instanceof File) {
+//				if (fat.getOpenedFiles().size() < Utility.num) {
+//					if (fat.isOpenedFile(thisBlock)) {
+//						Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
+//						duplicate.showAndWait();
+//					} else {
+//						fat.addOpenedFile(thisBlock, Utility.flagWrite);
+//						refreshOpenedTable();
+//						new FileView((File)thisBlock.getObject(),
+//								fat, thisBlock, MainView.this);						
+//					}
+//				} else {
+//					Alert exceed = new Alert(AlertType.ERROR, "文件打开已到上限");
+//					exceed.showAndWait();
+//				}								
+//			} else {
+//				Folder thisFolder = (Folder)thisBlock.getObject();
+//				String newPath = thisFolder.getLocation() +
+//						"\\" + thisFolder.getFolderName();
+//				flowPane.getChildren().removeAll(flowPane.getChildren());
+//				addIcon(fat.getBlockList(newPath), newPath);
+//				locField.setText(newPath);
+//				recentPath = newPath;
+//				recentNode = pathMap.get(thisFolder.getPath());
+//			}
+//		});
 		
 		delItem.setOnAction(ActionEvent -> {
-			FAT thisFAT = fatList.get(index);						
-			if (fatManager.isOpenedFile(thisFAT)) {
+			DiskBlock thisBlock = blockList.get(index);						
+			if (fat.isOpenedFile(thisBlock)) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText(null);
 				alert.setContentText("文件未关闭");
 				alert.showAndWait();
 			} else {
-				new delView(thisFAT, fatManager, MainView.this);
+				new delView(thisBlock, fat, MainView.this);
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fatManager.getFATList(recentPath), recentPath);
-				refreshFATTable();
+				addIcon(fat.getBlockList(recentPath), recentPath);
+				refreshBlockTable();
 			}			
 		});
 		
 		renameItem.setOnAction(ActionEvent -> {
-			FAT thisFAT = fatList.get(index);
-			new RenameView(thisFAT, fatManager, icons[index], MainView.this,
+			DiskBlock thisBlock = blockList.get(index);
+			new RenameView(thisBlock, fat, icons[index], MainView.this,
 					pathMap);
 		});
 		
 		propItem.setOnAction(ActionEvent -> {
-			FAT thisFAT = fatList.get(index);
-			new PropertyView(thisFAT, fatManager, icons[index], MainView.this,
+			DiskBlock thisBlock = blockList.get(index);
+			new PropertyView(thisBlock, fat, icons[index], MainView.this,
 					pathMap);
 		});
 				
@@ -254,11 +254,11 @@ public class MainView {
 		backButton = new Button();
 		backButton.setOnAction(ActionEvent -> {
 			System.out.println(recentPath);
-			Path backPath = fatManager.getPath(recentPath).getParent();
+			Path backPath = fat.getPath(recentPath).getParent();
 			if (backPath != null) {
-				List<FAT> fats = fatManager.getFATList(backPath.getPathName());
+				List<DiskBlock> blocks = fat.getBlockList(backPath.getPathName());
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fats, backPath.getPathName());
+				addIcon(blocks, backPath.getPathName());
 				recentPath = backPath.getPathName();
 				recentNode = pathMap.get(backPath);
 				locField.setText(recentPath);
@@ -286,11 +286,11 @@ public class MainView {
 		gotoButton = new Button();
 		gotoButton.setOnAction(ActionEvent -> {
 			String textPath = locField.getText();
-			Path gotoPath = fatManager.getPath(textPath);
+			Path gotoPath = fat.getPath(textPath);
 			if (gotoPath != null) {
-				List<FAT> fats = fatManager.getFATList(textPath);
+				List<DiskBlock> blocks = fat.getBlockList(textPath);
 				flowPane.getChildren().removeAll(flowPane.getChildren());
-				addIcon(fats, textPath);
+				addIcon(blocks, textPath);
 				recentPath = textPath;
 				recentNode = pathMap.get(gotoPath);
 			} else {
@@ -331,18 +331,18 @@ public class MainView {
 	
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void initTables() {
-		fatTable = new TableView<FAT>();
+		blockTable = new TableView<DiskBlock>();
 		openedTable = new TableView<OpenedFile>();
 		
-		fatTable.setStyle("-fx-background-color: #ffffff;"
+		blockTable.setStyle("-fx-background-color: #ffffff;"
 				+ "-fx-border-color: #d3d3d3;"
 				+ "-fx-border-width:0.5px;");
 		openedTable.setStyle("-fx-background-color: #ffffff;"
 				+ "-fx-border-color: #d3d3d3;"
 				+ "-fx-border-width:0.5px;");
 				
-		dataFAT = FXCollections.observableArrayList(fatManager.getFATs());
-		dataOpened = FXCollections.observableArrayList(fatManager.getOpenedFiles());
+		dataBlock = FXCollections.observableArrayList(fat.getDiskBlocks());
+		dataOpened = FXCollections.observableArrayList(fat.getOpenedFiles());
 	    		
 		TableColumn noCol = new TableColumn("磁盘块");
 	    noCol.setCellValueFactory(
@@ -406,10 +406,10 @@ public class MainView {
 	    lengthCol.setSortable(false);
 	    lengthCol.setResizable(false);
 	    
-	    fatTable.setItems(dataFAT);        
-	    fatTable.getColumns().addAll(noCol, indexCol, typeCol, objCol);
-	    fatTable.setEditable(false);
-	    fatTable.setPrefWidth(300);
+	    blockTable.setItems(dataBlock);        
+	    blockTable.getColumns().addAll(noCol, indexCol, typeCol, objCol);
+	    blockTable.setEditable(false);
+	    blockTable.setPrefWidth(300);
 	    
 	    openedTable.setItems(dataOpened);
 	    openedTable.getColumns().addAll(nameCol, flagCol, diskCol, pathCol, lengthCol);
@@ -421,7 +421,7 @@ public class MainView {
         rootNode.setExpanded(true);
         
         recentNode = rootNode;
-        pathMap.put(fatManager.getPath("C:"), rootNode);
+        pathMap.put(fat.getPath("C:"), rootNode);
         
         treeView = new TreeView<String>(rootNode);
         treeView.setPrefWidth(200);
@@ -431,17 +431,17 @@ public class MainView {
 				+ "-fx-border-width:0.5px;");
 	}
 	
-	private void addIcon(List<FAT> fList, String path) {
-		fatList = fList;
-		int n = fList.size();
+	private void addIcon(List<DiskBlock> bList, String path) {
+		blockList = bList;
+		int n = bList.size();
 		icons = new Label[n];
 		for (int i = 0; i < n; i++) {
-			if (fList.get(i).getIndex() == Utility.END){
-				if (fList.get(i).getObject() instanceof Folder){
-					icons[i] = new Label(((Folder)fList.get(i).getObject()).getFolderName(),
+			//if (bList.get(i).getIndex() == Utility.END){
+				if (bList.get(i).getObject() instanceof Folder){
+					icons[i] = new Label(((Folder)bList.get(i).getObject()).getFolderName(),
 							new ImageView(Utility.folderImg));
 				} else {
-					icons[i] = new Label(((File)fList.get(i).getObject()).getFileName(),
+					icons[i] = new Label(((File)bList.get(i).getObject()).getFileName(),
 							new ImageView(Utility.fileImg));
 				}
 				icons[i].setContentDisplay(ContentDisplay.TOP);
@@ -480,39 +480,13 @@ public class MainView {
 									event.getScreenY());
 						} else if (event.getButton() == MouseButton.PRIMARY &&
 								event.getClickCount() == 2) {							
-							FAT thisFAT = fList.get(index);			
-							if (thisFAT.getObject() instanceof File) {
-								if (fatManager.getOpenedFiles().size() < Utility.num) {
-									if (fatManager.isOpenedFile(thisFAT)) {
-										Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
-										duplicate.showAndWait();
-									} else {
-										fatManager.addOpenedFile(thisFAT, Utility.flagWrite);
-										refreshOpenedTable();
-										new FileView((File)thisFAT.getObject(),
-												fatManager, thisFAT, MainView.this);										
-									}
-								} else {
-									Alert exceed = new Alert(AlertType.ERROR, "文件打开已到上限");
-									exceed.showAndWait();
-								}								
-							} else {
-								Folder thisFolder = (Folder)thisFAT.getObject();
-								String newPath = thisFolder.getLocation() +
-										"\\" + thisFolder.getFolderName();
-								flowPane.getChildren().removeAll(flowPane.getChildren());
-								addIcon(fatManager.getFATList(newPath), newPath);
-								locField.setText(newPath);
-								recentPath = newPath;
-								recentNode = pathMap.get(thisFolder.getPath());
-								System.out.println(recentPath);
-							}
+							onOpen();
 						} else {
 							contextMenu2.hide();
 						}
 					}
 				});
-			}
+			//}
 		}
 	}
 	
@@ -539,16 +513,49 @@ public class MainView {
 		this.recentNode = recentNode;
 	}
 
-	public void refreshFATTable() {
-		dataFAT = FXCollections.observableArrayList(fatManager.getFATs());			
-		fatTable.setItems(dataFAT);
-		fatTable.refresh();
+	public void refreshBlockTable() {
+		dataBlock = FXCollections.observableArrayList(fat.getDiskBlocks());			
+		blockTable.setItems(dataBlock);
+		blockTable.refresh();
 	}
 	
 	public void refreshOpenedTable() {
-		dataOpened = FXCollections.observableArrayList(fatManager.getOpenedFiles());
+		dataOpened = FXCollections.observableArrayList(fat.getOpenedFiles());
 		openedTable.setItems(dataOpened);
 		openedTable.refresh();
+	}
+	
+	private void onOpen() {
+		DiskBlock thisBlock = blockList.get(index);
+		for (DiskBlock block : blockList) {
+			System.out.println(block);
+		}
+		if (thisBlock.getObject() instanceof File) {
+			if (fat.getOpenedFiles().size() < Utility.num) {
+				if (fat.isOpenedFile(thisBlock)) {
+					Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
+					duplicate.showAndWait();
+				} else {
+					fat.addOpenedFile(thisBlock, Utility.flagWrite);
+					refreshOpenedTable();
+					new FileView((File)thisBlock.getObject(),
+							fat, thisBlock, MainView.this);										
+				}
+			} else {
+				Alert exceed = new Alert(AlertType.ERROR, "文件打开已到上限");
+				exceed.showAndWait();
+			}								
+		} else {
+			Folder thisFolder = (Folder)thisBlock.getObject();
+			String newPath = thisFolder.getLocation() +
+					"\\" + thisFolder.getFolderName();
+			flowPane.getChildren().removeAll(flowPane.getChildren());
+			addIcon(fat.getBlockList(newPath), newPath);
+			locField.setText(newPath);
+			recentPath = newPath;
+			recentNode = pathMap.get(thisFolder.getPath());
+			//System.out.println(recentPath);
+		}
 	}
 	    
 	public final class TextFieldTreeCellImpl extends TreeCell<String> {
@@ -572,7 +579,7 @@ public class MainView {
 									break;
 								}
 							}
-							List<FAT> fats = fatManager.getFATList(pathName);
+							List<DiskBlock> fats = fat.getBlockList(pathName);
 							flowPane.getChildren().removeAll(flowPane.getChildren());
 							addIcon(fats, pathName);
 							recentPath = pathName;

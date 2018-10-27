@@ -2,12 +2,12 @@ package view;
 
 import java.util.Optional;
 
-import controller.FATManager;
+import controller.FAT;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ButtonType;
 import javafx.scene.control.Alert.AlertType;
 
-import model.FAT;
+import model.DiskBlock;
 import model.File;
 import model.Folder;
 import model.Path;
@@ -19,28 +19,28 @@ import model.Path;
 */
 public class delView {
 
+	private DiskBlock block;
 	private FAT fat;
-	private FATManager fatManager;
 	private MainView mainView;
 	private Alert mainAlert, okAlert, errAlert;	
 	
-	public delView(FAT fat, FATManager fatManager, MainView mainView) {
+	public delView(DiskBlock block, FAT fat, MainView mainView) {
+		this.block = block;
 		this.fat = fat;
-		this.fatManager = fatManager;
 		this.mainView = mainView;
 		showView();
 	}
 	
 	private void showView() {
 		String mesg = "";
-		if (fat.getObject() instanceof Folder) {
-			Folder folder = (Folder)fat.getObject();
+		if (block.getObject() instanceof Folder) {
+			Folder folder = (Folder)block.getObject();
 			mesg = folder.getFolderName()
 					+ "\n类型: " + folder.getType()
 					+ "\n大小: " + folder.getSize()
 					+ "\n创建时间: " + folder.getCreateTime();
 		} else {
-			File file = (File)fat.getObject();
+			File file = (File)block.getObject();
 			mesg = file.getFileName()
 					+ "\n类型: " + file.getType()
 					+ "\n大小: " + file.getSize() + "KB"
@@ -65,10 +65,10 @@ public class delView {
 		Optional<ButtonType> result = mainAlert.showAndWait();	
 		Path thisPath = null;
 		if (result.get() == ButtonType.OK) {
-			if (fat.getObject() instanceof Folder) {
-				thisPath = ((Folder)fat.getObject()).getPath();
+			if (block.getObject() instanceof Folder) {
+				thisPath = ((Folder)block.getObject()).getPath();
 			}
-			int res = fatManager.delete(fat);
+			int res = fat.delete(block);
 			if (res == 0) {//删除文件夹成功
 				mainView.removeNode(mainView.getRecentNode(), thisPath);												
 				okAlert.setContentText("删除文件夹成功");

@@ -2,7 +2,7 @@ package view;
 
 import java.util.Map;
 
-import controller.FATManager;
+import controller.FAT;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -19,7 +19,7 @@ import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
-import model.FAT;
+import model.DiskBlock;
 import model.File;
 import model.Folder;
 import model.Path;
@@ -31,8 +31,8 @@ import model.Path;
 */
 public class PropertyView {
 	
+	private DiskBlock block;
 	private FAT fat;
-	private FATManager fatManager;
 	private Label icon;
 	private MainView mainView;
 	private Map<Path, TreeItem<String>> pathMap;
@@ -47,10 +47,10 @@ public class PropertyView {
 					spaceField, timeField;
 	private Button okButton, cancelButton, applyButton;
 	
-	public PropertyView(FAT fat, FATManager fatManager, Label icon,
+	public PropertyView(DiskBlock block, FAT fat, Label icon,
 			MainView mainView, Map<Path, TreeItem<String>> pathMap) {
+		this.block = block;
 		this.fat = fat;
-		this.fatManager = fatManager;
 		this.icon = icon;
 		this.mainView = mainView;
 		this.pathMap = pathMap;
@@ -58,8 +58,8 @@ public class PropertyView {
 	}
 	
 	private void showView() {
-		if (fat.getObject() instanceof Folder) {
-			Folder folder = (Folder)fat.getObject();
+		if (block.getObject() instanceof Folder) {
+			Folder folder = (Folder)block.getObject();
 			nameField = new TextField(folder.getFolderName());
 			typeField = new Label(folder.getType());
 			locField = new Label(folder.getLocation());
@@ -69,7 +69,7 @@ public class PropertyView {
 			oldName = folder.getFolderName();
 			location = folder.getLocation();
 		} else {
-			File file = (File)fat.getObject();
+			File file = (File)block.getObject();
 			nameField = new TextField(file.getFileName());
 			typeField = new Label(file.getType());
 			locField = new Label(file.getLocation());
@@ -191,23 +191,23 @@ public class PropertyView {
 		applyButton.setOnAction(ActionEvent -> {
 			String newName = nameField.getText();
 			if (!oldName.equals(newName)) {
-				if (fatManager.hasName(location, newName)) {
+				if (fat.hasName(location, newName)) {
 					Alert alert = new Alert(AlertType.ERROR);
 					alert.setHeaderText(null);
 					alert.setContentText("此位置已包含同名文件/文件夹");
 					alert.show();
 				} else {
-					if (fat.getObject() instanceof Folder) {
-						Folder thisFolder = (Folder)fat.getObject();
+					if (block.getObject() instanceof Folder) {
+						Folder thisFolder = (Folder)block.getObject();
 						thisFolder.setFolderName(newName);
 						pathMap.get(thisFolder.getPath()).setValue(newName);
 						reLoc(location, location, oldName, newName, thisFolder);
 					} else {
-						((File)fat.getObject()).setFileName(newName);
+						((File)block.getObject()).setFileName(newName);
 					}
 					oldName = newName;
 					icon.setText(newName);
-					mainView.refreshFATTable();
+					mainView.refreshBlockTable();
 					applyButton.setDisable(true);
 				}				
 			}			
@@ -218,22 +218,22 @@ public class PropertyView {
 		okButton.setOnAction(ActionEvent -> {
 			String newName = nameField.getText();
 			if (!oldName.equals(newName)) {
-				if (fatManager.hasName(location, newName)) {
+				if (fat.hasName(location, newName)) {
 					Alert alert = new Alert(AlertType.ERROR);
 					alert.setHeaderText(null);
 					alert.setContentText("此位置已包含同名文件/文件夹");
 					alert.show();
 				} else {
-					if (fat.getObject() instanceof Folder) {
-						Folder thisFolder = (Folder)fat.getObject();
+					if (block.getObject() instanceof Folder) {
+						Folder thisFolder = (Folder)block.getObject();
 						thisFolder.setFolderName(newName);
 						pathMap.get(thisFolder.getPath()).setValue(newName);
 						reLoc(location, location, oldName, newName, thisFolder);
 					} else {
-						((File)fat.getObject()).setFileName(newName);
+						((File)block.getObject()).setFileName(newName);
 					}
 					icon.setText(newName);
-					mainView.refreshFATTable();
+					mainView.refreshBlockTable();
 				}
 			}
 			stage.close();
@@ -243,8 +243,8 @@ public class PropertyView {
 	private void reLoc(String oldP, String newP, String oldN, String newN, Folder folder) {
 		String oldLoc = oldP + "\\" + oldN;
 		String newLoc = newP + "\\" + newN;
-		Path oldPath = fatManager.getPath(oldLoc);
-		fatManager.replacePath(oldPath, newLoc);
+		Path oldPath = fat.getPath(oldLoc);
+		fat.replacePath(oldPath, newLoc);
 		for (Object child : folder.getChildren()) {
 			if (child instanceof File) {
 				((File) child).setLocation(newLoc);				
@@ -256,10 +256,10 @@ public class PropertyView {
 							nextFolder.getFolderName(), nextFolder);
 				}
 				else {
-					Path nextPath = fatManager.getPath(oldLoc + "\\" +
+					Path nextPath = fat.getPath(oldLoc + "\\" +
 							nextFolder.getFolderName());
 					String newNext = newLoc + "\\" + nextFolder.getFolderName();
-					fatManager.replacePath(nextPath, newNext);
+					fat.replacePath(nextPath, newNext);
 				}
 			}
 		}
