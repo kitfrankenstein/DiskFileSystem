@@ -9,16 +9,15 @@ import java.util.List;
 */
 public class Utility {
 	
-	public static int num = 5;
-	public static String ico = "/images/ico.png";
-	public static String folderImg = "/images/folder.png";
-	public static String fileImg = "/images/file.png";
-	public static String diskImg = "/images/disk.png";
-	public static String treeNodeImg = "/images/node.png";
-	public static String forwardImg = "/images/forward.png";
-	public static String backImg = "/images/back.png";
-	public static String saveImg = "/images/save.png";
-	public static String closeImg = "/images/close.png";
+	public static String ico = "res/ico.png";
+	public static String folderImg = "res/folder.png";
+	public static String fileImg = "res/file.png";
+	public static String diskImg = "res/disk.png";
+	public static String treeNodeImg = "res/node.png";
+	public static String forwardImg = "res/forward.png";
+	public static String backImg = "res/back.png";
+	public static String saveImg = "res/save.png";
+	public static String closeImg = "res/close.png";
 	
 	public static int END = 255;
 	public static int ERROR = -1;
@@ -33,7 +32,7 @@ public class Utility {
 	public static int flagWrite = 1;	
 	
 	
-	public static int getNumOfBlocks(int length){
+	public static int blocksCount(int length){
 		if (length <= 64){
 			return 1;
 		} else {

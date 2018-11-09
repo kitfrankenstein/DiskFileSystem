@@ -2,7 +2,6 @@ package view;
 
 import java.util.Map;
 
-import controller.FAT;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
@@ -17,6 +16,7 @@ import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
 import javafx.stage.StageStyle;
 import model.DiskBlock;
+import model.FAT;
 import model.File;
 import model.Folder;
 import model.Path;
@@ -133,6 +133,7 @@ public class RenameView {
 		stage = new Stage();
 		stage.setScene(scene);
 		stage.initStyle(StageStyle.UNDECORATED);
+		stage.setAlwaysOnTop(true);
 		stage.show();
 	}	
 

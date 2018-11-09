@@ -1,14 +1,7 @@
-package controller;
+package model;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import model.DiskBlock;
-import model.File;
-import model.Folder;
-import model.OpenedFile;
-import model.Path;
-import model.Utility;
 
 /**
  * @author Kit
@@ -164,7 +157,7 @@ public class FAT {
 		return Utility.ERROR;
 	}
 
-	public int numOfUsedBlocks() {
+	public int usedBlocksCount() {
 		int n = 0;
 		for (int i = 2; i < diskBlocks.length; i++) {
 			if (!diskBlocks[i].isFree()) {
@@ -174,7 +167,7 @@ public class FAT {
 		return n;
 	}
 
-	public int numOfFreeBlocks() {
+	public int freeBlocksCount() {
 		int n = 0;
 		for (int i = 2; i < diskBlocks.length; i++) {
 			if (diskBlocks[i].isFree()) {
@@ -202,7 +195,7 @@ public class FAT {
 		if (num > oldNum) {
 			// 增加磁盘块
 			int n = num - oldNum;
-			if (numOfFreeBlocks() < n) {
+			if (freeBlocksCount() < n) {
 				// 超过磁盘容量
 				return false;
 			}

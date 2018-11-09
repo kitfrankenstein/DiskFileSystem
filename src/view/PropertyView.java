@@ -2,7 +2,6 @@ package view;
 
 import java.util.Map;
 
-import controller.FAT;
 import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.EventHandler;
@@ -13,6 +12,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
 import javafx.scene.control.TreeItem;
+import javafx.scene.image.Image;
 import javafx.scene.control.Alert.AlertType;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.GridPane;
@@ -20,9 +20,11 @@ import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
 import javafx.stage.Stage;
 import model.DiskBlock;
+import model.FAT;
 import model.File;
 import model.Folder;
 import model.Path;
+import model.Utility;
 
 /**
 * @author Kit
@@ -46,6 +48,7 @@ public class PropertyView {
 	private Label typeField, locField, sizeField,
 					spaceField, timeField;
 	private Button okButton, cancelButton, applyButton;
+	private Image ico;
 	
 	public PropertyView(DiskBlock block, FAT fat, Label icon,
 			MainView mainView, Map<Path, TreeItem<String>> pathMap) {
@@ -68,6 +71,7 @@ public class PropertyView {
 			timeField = new Label(folder.getCreateTime());
 			oldName = folder.getFolderName();
 			location = folder.getLocation();
+			ico = new Image(Utility.folderImg);
 		} else {
 			File file = (File)block.getObject();
 			nameField = new TextField(file.getFileName());
@@ -78,6 +82,7 @@ public class PropertyView {
 			timeField = new Label(file.getCreateTime());
 			oldName = file.getFileName();
 			location = file.getLocation();
+			ico = new Image(Utility.fileImg);
 		}
 		
 		nameField.textProperty().addListener(new ChangeListener<String>() {
@@ -183,6 +188,8 @@ public class PropertyView {
 		scene = new Scene(vBox);
 		stage = new Stage();
 		stage.setScene(scene);
+		stage.getIcons().add(ico);
+		stage.setAlwaysOnTop(true);
 		stage.show();
 				
 	}

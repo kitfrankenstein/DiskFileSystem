@@ -2,7 +2,6 @@ package view;
 
 import java.util.Optional;
 
-import controller.FAT;
 import javafx.event.Event;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -21,6 +20,7 @@ import javafx.scene.image.ImageView;
 import javafx.stage.Stage;
 import javafx.stage.WindowEvent;
 import model.DiskBlock;
+import model.FAT;
 import model.File;
 import model.Folder;
 import model.Utility;
@@ -133,7 +133,7 @@ public class FileView {
 	
 	private void saveContent(String newContent) {
 		int newLength = newContent.length();
-		int blockCount = Utility.getNumOfBlocks(newLength);
+		int blockCount = Utility.blocksCount(newLength);
 		file.setLength(blockCount);
 		file.setContent(newContent);
 		file.setSize(Utility.getSize(newLength));
