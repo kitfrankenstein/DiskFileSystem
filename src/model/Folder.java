@@ -17,9 +17,6 @@ public class Folder {
 	private int diskNum;
 	private String type;
 
-	private boolean hasChild;
-	private int numOfFAT;
-
 	private String location;
 	private double size;
 	private String space;
@@ -69,22 +66,6 @@ public class Folder {
 
 	public void setDiskNum(int diskNum) {
 		this.diskNum = diskNum;
-	}
-
-	public boolean isHasChild() {
-		return hasChild;
-	}
-
-	public void setHasChild(boolean hasChild) {
-		this.hasChild = hasChild;
-	}
-
-	public int getNumOfFAT() {
-		return numOfFAT;
-	}
-
-	public void setNumOfFAT(int numOfFAT) {
-		this.numOfFAT = numOfFAT;
 	}
 
 	public String getLocation() {

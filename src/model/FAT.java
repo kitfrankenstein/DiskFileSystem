@@ -6,7 +6,7 @@ import java.util.List;
 /**
  * @author Kit
  * @version: 2018年9月25日 下午11:39:46
- * 
+ * 文件分配表类，包含管理盘块、文件、路径等相关操作
  */
 public class FAT {
 
@@ -49,6 +49,11 @@ public class FAT {
 		}
 	}
 
+	/**
+	 * 判断指定盘块中的文件是否已打开
+	 * @param block
+	 * @return
+	 */
 	public boolean isOpenedFile(DiskBlock block) {
 		if (block.getObject() instanceof Folder) {
 			return false;
@@ -57,7 +62,7 @@ public class FAT {
 	}
 
 	/**
-	 * 
+	 * 在指定路径下创建文件夹
 	 * @param path
 	 * @return
 	 */
@@ -106,7 +111,7 @@ public class FAT {
 	}
 
 	/**
-	 * 
+	 * 在指定路径下创建文件
 	 * @param path
 	 * @return
 	 */
@@ -147,7 +152,10 @@ public class FAT {
 		return index2;
 	}
 
-	// 得到第一个为空的磁盘块
+	/**
+	 * 返回第一个空闲盘块的盘块号
+	 * @return
+	 */
 	public int searchEmptyDiskBlock() {
 		for (int i = 2; i < diskBlocks.length; i++) {
 			if (diskBlocks[i].isFree()) {
@@ -157,6 +165,10 @@ public class FAT {
 		return Utility.ERROR;
 	}
 
+	/**
+	 * 计算已使用盘块数
+	 * @return
+	 */
 	public int usedBlocksCount() {
 		int n = 0;
 		for (int i = 2; i < diskBlocks.length; i++) {
@@ -167,6 +179,10 @@ public class FAT {
 		return n;
 	}
 
+	/**
+	 * 计算空闲盘块数
+	 * @return
+	 */
 	public int freeBlocksCount() {
 		int n = 0;
 		for (int i = 2; i < diskBlocks.length; i++) {
@@ -177,9 +193,13 @@ public class FAT {
 		return n;
 	}
 
-	// 保存数据时重新分配磁盘
+	/**
+	 * 文件长度变更时重新分配盘块
+	 * @param num
+	 * @param block
+	 * @return
+	 */
 	public boolean reallocBlocks(int num, DiskBlock block) {
-		// 从哪片磁盘开始
 		File thisFile = (File) block.getObject();
 		int begin = thisFile.getDiskNum();
 		int index = diskBlocks[begin].getIndex();
@@ -232,6 +252,11 @@ public class FAT {
 		return true;
 	}
 
+	/**
+	 * 返回指定路径下所有文件夹
+	 * @param path
+	 * @return
+	 */
 	public List<Folder> getFolders(String path) {
 		List<Folder> list = new ArrayList<Folder>();
 		for (int i = 2; i < diskBlocks.length; i++) {
@@ -246,20 +271,25 @@ public class FAT {
 		return list;
 	}
 
-	public List<File> getFiles(String path) {
-		List<File> list = new ArrayList<File>();
-		for (int i = 2; i < diskBlocks.length; i++) {
-			if (!diskBlocks[i].isFree()) {
-				if (diskBlocks[i].getObject() instanceof File) {
-					if (((File) (diskBlocks[i].getObject())).getLocation().equals(path)) {
-						list.add((File) diskBlocks[i].getObject());
-					}
-				}
-			}
-		}
-		return list;
-	}
+//	public List<File> getFiles(String path) {
+//		List<File> list = new ArrayList<File>();
+//		for (int i = 2; i < diskBlocks.length; i++) {
+//			if (!diskBlocks[i].isFree()) {
+//				if (diskBlocks[i].getObject() instanceof File) {
+//					if (((File) (diskBlocks[i].getObject())).getLocation().equals(path)) {
+//						list.add((File) diskBlocks[i].getObject());
+//					}
+//				}
+//			}
+//		}
+//		return list;
+//	}
 
+	/**
+	 * 返回所有文件夹和文件的起始盘块
+	 * @param path
+	 * @return
+	 */
 	public List<DiskBlock> getBlockList(String path) {
 		List<DiskBlock> bList = new ArrayList<DiskBlock>();
 		for (int i = 2; i < diskBlocks.length; i++) {
@@ -286,8 +316,7 @@ public class FAT {
 	}
 
 	/**
-	 * 获得当前路径指向的文件夹
-	 * 
+	 * 返回指定路径指向的文件夹
 	 * @param path
 	 * @return
 	 */
@@ -307,6 +336,11 @@ public class FAT {
 		return null;
 	}
 
+	/**
+	 * 给出路径名返回路径对象
+	 * @param path
+	 * @return
+	 */
 	public Path getPath(String path) {
 		for (Path p : paths) {
 			if (p.getPathName().equals(path)) {
@@ -317,13 +351,14 @@ public class FAT {
 	}
 
 	/**
-	 * 
+	 * 删除
 	 * @param block
+	 * @return
 	 */
 	public int delete(DiskBlock block) {
 		if (block.getObject() instanceof File) {
 			if (isOpenedFile(block)) {
-				// 文件正打开着，不能删除
+				// 文件已打开，不能删除
 				return 3;
 			}
 			File thisFile = (File) block.getObject();
@@ -391,6 +426,11 @@ public class FAT {
 		this.diskBlocks = diskBlocks;
 	}
 
+	/**
+	 * 按盘块号查找盘块
+	 * @param index
+	 * @return
+	 */
 	public DiskBlock getBlock(int index) {
 		return diskBlocks[index];
 	}
@@ -434,7 +474,13 @@ public class FAT {
 		}
 		return false;
 	}
-	
+
+	/**
+	 * 判断指定路径下是否有同名文件夹或文件
+	 * @param path
+	 * @param name
+	 * @return
+	 */
 	public boolean hasName(String path, String name) {
 		Folder thisFolder = getFolder(path);
 		for (Object child : thisFolder.getChildren()) {
