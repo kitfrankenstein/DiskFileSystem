@@ -12,19 +12,18 @@ import java.util.List;
  */
 public class Folder {
 
-	private String folderName;
-	private String property;
-	private int diskNum;
-	private String type;
+	private String folderName;//文件夹名
+	private String type;//类型
+	private int diskNum;//起始盘块号
 
-	private String location;
-	private double size;
-	private String space;
-	private Date createTime;
+	private String location;//位置
+	private double size;//大小
+	private String space;//占用空间
+	private Date createTime;//创建时间
 
-	private Folder parent;
-	private List<Object> children;
-	private Path path;
+	private Folder parent;//父文件夹
+	private List<Object> children;//子文件夹
+	private Path path;//路径对象
 
 	public Folder(String folderName) {
 		this.folderName = folderName;
@@ -51,13 +50,13 @@ public class Folder {
 	public void setFolderName(String folderName) {
 		this.folderName = folderName;
 	}
-
-	public String getProperty() {
-		return property;
+	
+	public String getType() {
+		return type;
 	}
 
-	public void setProperty(String property) {
-		this.property = property;
+	public void setType(String type) {
+		this.type = type;
 	}
 
 	public int getDiskNum() {
@@ -100,14 +99,6 @@ public class Folder {
 
 	public void setCreateTime(Date createTime) {
 		this.createTime = createTime;
-	}
-
-	public String getType() {
-		return type;
-	}
-
-	public void setType(String type) {
-		this.type = type;
 	}
 
 	public Folder getParent() {

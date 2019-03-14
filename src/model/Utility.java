@@ -28,8 +28,8 @@ public class Utility {
 	public static String FILE = "文件";
 	public static String EMPTY = "空";
 			
-	public static int flagRead = 0;
-	public static int flagWrite = 1;	
+	public static int FLAGREAD = 0;
+	public static int FLAGWRITE = 1;	
 	
 	
 	public static int blocksCount(int length){

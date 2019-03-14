@@ -4,7 +4,6 @@ import model.DiskBlock;
 import model.FAT;
 import model.File;
 import model.Folder;
-import model.OpenedFile;
 import model.Path;
 import model.Utility;
 
@@ -71,9 +70,9 @@ public class MainView {
 	private TreeItem<String> rootNode, recentNode;
 
 	private TableView<DiskBlock> blockTable;
-	private TableView<OpenedFile> openedTable;
+	private TableView<File> openedTable;
 	private ObservableList<DiskBlock> dataBlock;
-	private ObservableList<OpenedFile> dataOpened;
+	private ObservableList<File> dataOpened;
 
 	private ContextMenu contextMenu, contextMenu2;
 	private MenuItem createFileItem, createFolderItem, openItem, renameItem, delItem, propItem;
@@ -293,7 +292,7 @@ public class MainView {
 	@SuppressWarnings({ "rawtypes", "unchecked" })
 	private void initTables() {
 		blockTable = new TableView<DiskBlock>();
-		openedTable = new TableView<OpenedFile>();
+		openedTable = new TableView<File>();
 
 		blockTable
 				.setStyle("-fx-background-color: #ffffff;" + "-fx-border-color: #d3d3d3;" + "-fx-border-width:0.5px;");
@@ -344,7 +343,7 @@ public class MainView {
 		diskCol.setResizable(false);
 
 		TableColumn pathCol = new TableColumn("路径");
-		pathCol.setCellValueFactory(new PropertyValueFactory("path"));
+		pathCol.setCellValueFactory(new PropertyValueFactory("location"));
 		pathCol.setSortable(false);
 		pathCol.setMinWidth(500);
 		pathCol.setResizable(false);
@@ -475,7 +474,7 @@ public class MainView {
 					Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
 					duplicate.showAndWait();
 				} else {
-					fat.addOpenedFile(thisBlock, Utility.flagWrite);
+					fat.addOpenedFile(thisBlock, Utility.FLAGWRITE);
 					refreshOpenedTable();
 					new FileView((File) thisBlock.getObject(), fat, thisBlock, MainView.this);
 				}

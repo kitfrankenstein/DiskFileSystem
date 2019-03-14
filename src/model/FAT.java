@@ -11,7 +11,7 @@ import java.util.List;
 public class FAT {
 
 	private DiskBlock[] diskBlocks;
-	private List<OpenedFile> openedFiles;
+	private List<File> openedFiles;
 	private Folder c;
 	private Path rootPath = new Path("C:", null);
 	private List<Path> paths;
@@ -25,7 +25,7 @@ public class FAT {
 		for (int i = 2; i < 128; i++) {
 			diskBlocks[i] = new DiskBlock(i, Utility.FREE, Utility.EMPTY, null);
 		}
-		openedFiles = new ArrayList<OpenedFile>();
+		openedFiles = new ArrayList<File>();
 		paths = new ArrayList<Path>();
 		paths.add(rootPath);
 		c.setPath(rootPath);
@@ -33,17 +33,17 @@ public class FAT {
 
 	public void addOpenedFile(DiskBlock block, int flag) {
 		File thisFile = (File) block.getObject();
-		OpenedFile openedFile = new OpenedFile(thisFile, flag);
-		openedFiles.add(openedFile);
-		thisFile.setOpenedFile(openedFile);
+		openedFiles.add(thisFile);
+		thisFile.setOpened(true);
+		thisFile.setFlag(flag);
 	}
 
 	public void removeOpenedFile(DiskBlock block) {
 		File thisFile = (File) block.getObject();
 		for (int i = 0; i < openedFiles.size(); i++) {
-			if (openedFiles.get(i).getFile() == thisFile) {
+			if (openedFiles.get(i) == thisFile) {
 				openedFiles.remove(i);
-				thisFile.setOpenedFile(null);
+				thisFile.setOpened(false);
 				break;
 			}
 		}
@@ -248,7 +248,7 @@ public class FAT {
 		} else {
 			// 不变
 		}
-		thisFile.getOpenedFile().setLength(num);
+		thisFile.setLength(num);
 		return true;
 	}
 
@@ -270,20 +270,6 @@ public class FAT {
 		}
 		return list;
 	}
-
-//	public List<File> getFiles(String path) {
-//		List<File> list = new ArrayList<File>();
-//		for (int i = 2; i < diskBlocks.length; i++) {
-//			if (!diskBlocks[i].isFree()) {
-//				if (diskBlocks[i].getObject() instanceof File) {
-//					if (((File) (diskBlocks[i].getObject())).getLocation().equals(path)) {
-//						list.add((File) diskBlocks[i].getObject());
-//					}
-//				}
-//			}
-//		}
-//		return list;
-//	}
 
 	/**
 	 * 返回所有文件夹和文件的起始盘块
@@ -435,11 +421,11 @@ public class FAT {
 		return diskBlocks[index];
 	}
 
-	public List<OpenedFile> getOpenedFiles() {
+	public List<File> getOpenedFiles() {
 		return openedFiles;
 	}
 
-	public void setOpenedFiles(List<OpenedFile> openFiles) {
+	public void setOpenedFiles(List<File> openFiles) {
 		this.openedFiles = openFiles;
 	}
 

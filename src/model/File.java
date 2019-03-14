@@ -10,23 +10,25 @@ import java.util.Date;
  */
 public class File {
 
-	private String fileName;
+	private String fileName;//文件名
 	private String type;// 类型
-	private String property;// 属性
 	private int diskNum;// 起始盘块号
+	private int flag;//读写标记
 	private int length;// 占用盘块数
 	private String content;// 内容
 
-	private Folder parent;
-	private OpenedFile openedFile;
+	private Folder parent;//父文件夹
 
 	private String location; // 位置
 	private double size; // 大小
 	private String space; // 占用空间
-	private Date createTime;
+	private Date createTime;//创建时间
+	
+	private boolean isOpen;//打开标志
 
 	public File(String fileName) {
 		this.fileName = fileName;
+		this.setOpened(false);
 	}
 
 	public File(String fileName, String location, int diskNum, Folder parent) {
@@ -42,6 +44,8 @@ public class File {
 		this.createTime = new Date();
 
 		this.parent = parent;
+		
+		this.setOpened(false);
 	}
 
 	public String getFileName() {
@@ -60,20 +64,20 @@ public class File {
 		this.type = type;
 	}
 
-	public String getProperty() {
-		return property;
-	}
-
-	public void setProperty(String property) {
-		this.property = property;
-	}
-
 	public int getDiskNum() {
 		return diskNum;
 	}
 
 	public void setDiskNum(int diskNum) {
 		this.diskNum = diskNum;
+	}
+
+	public int getFlag() {
+		return flag;
+	}
+
+	public void setFlag(int flag) {
+		this.flag = flag;
 	}
 
 	public int getLength() {
@@ -137,17 +141,13 @@ public class File {
 	public boolean hasParent() {
 		return (parent == null) ? false : true;
 	}
-
-	public OpenedFile getOpenedFile() {
-		return openedFile;
-	}
-
-	public void setOpenedFile(OpenedFile openedFile) {
-		this.openedFile = openedFile;
-	}
 	
 	public boolean isOpened() {
-		return openedFile == null ? false : true;
+		return isOpen;
+	}
+	
+	public void setOpened(boolean isOpen) {
+		this.isOpen = isOpen;
 	}
 
 	@Override
