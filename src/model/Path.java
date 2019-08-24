@@ -5,11 +5,17 @@ package model;
 * 
 */
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-public class Path {
+public class Path implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private String pathName;
 	private Path parent;
 	private List<Path> children;
@@ -58,6 +64,11 @@ public class Path {
 
 	public boolean hasChild() {
 		return children.isEmpty() ? false : true;
+	}
+
+	@Override
+	public String toString() {
+		return "Path [pathName=" + pathName + "]";
 	}
 
 }

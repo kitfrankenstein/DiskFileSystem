@@ -1,17 +1,29 @@
 package model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import util.FATUtil;
 
 /**
  * @author Kit
  * @version: 2018年9月25日 下午11:24:44
  * 
  */
-public class Folder {
+public class Folder implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private String folderName;//文件夹名
 	private String type;//类型
 	private int diskNum;//起始盘块号
@@ -24,9 +36,22 @@ public class Folder {
 	private Folder parent;//父文件夹
 	private List<Object> children;//子文件夹
 	private Path path;//路径对象
+	
+	private transient StringProperty folderNameP = new SimpleStringProperty();
+    
+	//UI获取property
+	public StringProperty folderNamePProperty() {
+		return folderNameP;
+	}
+	
+	//设置property
+	private void setFolderNameP() {
+		this.folderNameP.set(folderName);
+	}
 
 	public Folder(String folderName) {
 		this.folderName = folderName;
+		setFolderNameP();
 	}
 
 	public Folder(String folderName, String location, int diskNum, Folder parent) {
@@ -37,10 +62,12 @@ public class Folder {
 		this.createTime = new Date();
 
 		this.diskNum = diskNum;
-		this.type = Utility.FOLDER;
+		this.type = FATUtil.FOLDER;
 
 		this.parent = parent;
 		this.setChildren(new ArrayList<>());
+		
+		setFolderNameP();
 	}
 
 	public String getFolderName() {
@@ -49,6 +76,7 @@ public class Folder {
 
 	public void setFolderName(String folderName) {
 		this.folderName = folderName;
+		setFolderNameP();
 	}
 	
 	public String getType() {
@@ -140,6 +168,11 @@ public class Folder {
 	public void setPath(Path path) {
 		this.path = path;
 	}
+	
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    	s.defaultReadObject();
+    	folderNameP = new SimpleStringProperty(folderName);
+    }
 
 	@Override
 	public String toString() {

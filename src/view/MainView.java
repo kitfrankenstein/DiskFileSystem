@@ -5,8 +5,14 @@ import model.FAT;
 import model.File;
 import model.Folder;
 import model.Path;
-import model.Utility;
+import util.FATUtil;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -48,6 +54,8 @@ import javafx.stage.Stage;
  */
 public class MainView {
 
+	private static final String DURATION_PATH = "disk";
+	
 	private FAT fat;
 	private int index;
 	private List<DiskBlock> blockList;
@@ -78,20 +86,20 @@ public class MainView {
 	private MenuItem createFileItem, createFolderItem, openItem, renameItem, delItem, propItem;
 
 	public MainView(Stage stage) {
-		fat = new FAT();
 		pathMap = new HashMap<Path, TreeItem<String>>();
+		try (ObjectInputStream inputStream = new ObjectInputStream(new FileInputStream(DURATION_PATH))) {
+			fat = (FAT) inputStream.readObject();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		if (fat == null) {
+			fat = new FAT();
+		}
 		recentPath = "C:";
 		initFrame(stage);
 	}
 
 	private void initFrame(Stage stage) {
-
-		initContextMenu();
-		menuItemSetOnAction();
-
-		initTopBox();
-		initTables();
-		initTreeView();
 
 		flowPane = new FlowPane();
 		flowPane.setPrefSize(600, 100);
@@ -104,21 +112,13 @@ public class MainView {
 			}
 		});
 
-		// borderPane = new BorderPane();
-		//
-		// borderPane.setCenter(flowPane);
-		// borderPane.setTop(locBox);
-		// borderPane.setBottom(openedTable);
-		// borderPane.setLeft(treeView);
-		// borderPane.setRight(fatTable);
-		//
-		// borderPane.setStyle("-fx-background-radius: 3px;"
-		// + "-fx-border-color:#95AFA6;"
-		// + "-fx-border-width:3px;"
-		// + "-fx-border-radius:3px;");
-		//
-		// scene = new Scene(borderPane);
+		initContextMenu();
+		menuItemSetOnAction();
 
+		initTopBox();
+		initTables();
+		initTreeView();
+		
 		workBox = new HBox(flowPane, blockTable);
 		rightBox = new VBox(workBox, openedTable);
 		mainBox = new HBox(treeView, rightBox);
@@ -128,9 +128,19 @@ public class MainView {
 		scene = new Scene(fullBox);
 		stage.setScene(scene);
 		stage.setResizable(false);
-		stage.getIcons().add(new Image(Utility.ico));
+		stage.getIcons().add(new Image(FATUtil.ico));
 		stage.setTitle("模拟磁盘文件系统");
 		stage.show();
+		stage.setOnCloseRequest(e -> {
+			try (ObjectOutputStream outputStream = new ObjectOutputStream(new FileOutputStream(DURATION_PATH))) {
+				System.out.println("writing");
+				outputStream.writeObject(fat);
+			} catch (FileNotFoundException e1) {
+				e1.printStackTrace();
+			} catch (IOException e2) {
+				e2.printStackTrace();
+			}
+		});
 	}
 
 	private void initContextMenu() {
@@ -149,21 +159,19 @@ public class MainView {
 	private void menuItemSetOnAction() {
 		createFileItem.setOnAction(ActionEvent -> {
 			int no = fat.createFile(recentPath);
-			if (no == Utility.ERROR) {
+			if (no == FATUtil.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
 				alert.showAndWait();
 			} else {
 				flowPane.getChildren().removeAll(flowPane.getChildren());
 				addIcon(fat.getBlockList(recentPath), recentPath);
-				refreshBlockTable();
-				// System.out.println(fatManager.getFAT(no).getObject().toString());
 			}
 		});
 
 		createFolderItem.setOnAction(ActionEvent -> {
 			int no = fat.createFolder(recentPath);
-			if (no == Utility.ERROR) {
+			if (no == FATUtil.ERROR) {
 				Alert alert = new Alert(AlertType.ERROR);
 				alert.setHeaderText("磁盘容量已满，无法创建");
 				alert.showAndWait();
@@ -172,7 +180,6 @@ public class MainView {
 				Path newPath = newFolder.getPath();
 				flowPane.getChildren().removeAll(flowPane.getChildren());
 				addIcon(fat.getBlockList(recentPath), recentPath);
-				refreshBlockTable();
 				addNode(recentNode, newPath);
 			}
 		});
@@ -190,18 +197,17 @@ public class MainView {
 				new delView(thisBlock, fat, MainView.this);
 				flowPane.getChildren().removeAll(flowPane.getChildren());
 				addIcon(fat.getBlockList(recentPath), recentPath);
-				refreshBlockTable();
 			}
 		});
 
 		renameItem.setOnAction(ActionEvent -> {
 			DiskBlock thisBlock = blockList.get(index);
-			new RenameView(thisBlock, fat, icons[index], MainView.this, pathMap);
+			new RenameView(thisBlock, fat, icons[index], pathMap);
 		});
 
 		propItem.setOnAction(ActionEvent -> {
 			DiskBlock thisBlock = blockList.get(index);
-			new PropertyView(thisBlock, fat, icons[index], MainView.this, pathMap);
+			new PropertyView(thisBlock, fat, icons[index], pathMap);
 		});
 
 	}
@@ -226,13 +232,12 @@ public class MainView {
 				locField.setText(recentPath);
 			}
 		});
-		backButton.setGraphic(new ImageView(Utility.backImg));
+		backButton.setGraphic(new ImageView(FATUtil.backImg));
 		backButton.setStyle("-fx-background-color: #ffffff;");
 		backButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				backButton.setStyle("-fx-background-color: #1e90ff;");
 			}
 		});
@@ -240,7 +245,6 @@ public class MainView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				backButton.setStyle("-fx-background-color: #ffffff;");
 			}
 		});
@@ -263,13 +267,12 @@ public class MainView {
 				locField.setText(recentPath);
 			}
 		});
-		gotoButton.setGraphic(new ImageView(Utility.forwardImg));
+		gotoButton.setGraphic(new ImageView(FATUtil.forwardImg));
 		gotoButton.setStyle("-fx-background-color: #ffffff;");
 		gotoButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				gotoButton.setStyle("-fx-background-color: #1e90ff;");
 			}
 		});
@@ -277,7 +280,6 @@ public class MainView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				gotoButton.setStyle("-fx-background-color: #ffffff;");
 			}
 		});
@@ -300,56 +302,56 @@ public class MainView {
 				.setStyle("-fx-background-color: #ffffff;" + "-fx-border-color: #d3d3d3;" + "-fx-border-width:0.5px;");
 
 		dataBlock = FXCollections.observableArrayList(fat.getDiskBlocks());
-		dataOpened = FXCollections.observableArrayList(fat.getOpenedFiles());
+		dataOpened = fat.getOpenedFiles();
 
 		TableColumn noCol = new TableColumn("磁盘块");
-		noCol.setCellValueFactory(new PropertyValueFactory("no"));
+		noCol.setCellValueFactory(new PropertyValueFactory<DiskBlock, String>("noP"));
 		noCol.setSortable(false);
 		noCol.setMaxWidth(50);
 		noCol.setResizable(false);
 
 		TableColumn indexCol = new TableColumn("值");
-		indexCol.setCellValueFactory(new PropertyValueFactory("index"));
+		indexCol.setCellValueFactory(new PropertyValueFactory<DiskBlock, String>("indexP"));
 		indexCol.setSortable(false);
 		indexCol.setMaxWidth(50);
 		indexCol.setResizable(false);
 
 		TableColumn typeCol = new TableColumn("类型");
-		typeCol.setCellValueFactory(new PropertyValueFactory("type"));
+		typeCol.setCellValueFactory(new PropertyValueFactory<DiskBlock, String>("typeP"));
 		typeCol.setSortable(false);
 		typeCol.setMaxWidth(50);
 		typeCol.setResizable(false);
 
 		TableColumn objCol = new TableColumn("内容");
-		objCol.setCellValueFactory(new PropertyValueFactory("object"));
+		objCol.setCellValueFactory(new PropertyValueFactory<DiskBlock, String>("objectP"));
 		objCol.setSortable(false);
 		objCol.setMinWidth(133);
 		objCol.setResizable(false);
 
 		TableColumn nameCol = new TableColumn("文件名");
-		nameCol.setCellValueFactory(new PropertyValueFactory("fileName"));
+		nameCol.setCellValueFactory(new PropertyValueFactory<File, String>("fileNameP"));
 		nameCol.setSortable(false);
 		nameCol.setMinWidth(156);
 		nameCol.setResizable(false);
 
 		TableColumn flagCol = new TableColumn("打开方式");
-		flagCol.setCellValueFactory(new PropertyValueFactory("flag"));
+		flagCol.setCellValueFactory(new PropertyValueFactory<File, String>("flagP"));
 		flagCol.setSortable(false);
 		flagCol.setResizable(false);
 
 		TableColumn diskCol = new TableColumn("起始盘块号");
-		diskCol.setCellValueFactory(new PropertyValueFactory("diskNum"));
+		diskCol.setCellValueFactory(new PropertyValueFactory<File, String>("diskNumP"));
 		diskCol.setSortable(false);
 		diskCol.setResizable(false);
 
 		TableColumn pathCol = new TableColumn("路径");
-		pathCol.setCellValueFactory(new PropertyValueFactory("location"));
+		pathCol.setCellValueFactory(new PropertyValueFactory<File, String>("locationP"));
 		pathCol.setSortable(false);
 		pathCol.setMinWidth(500);
 		pathCol.setResizable(false);
 
 		TableColumn lengthCol = new TableColumn("文件长度");
-		lengthCol.setCellValueFactory(new PropertyValueFactory("length"));
+		lengthCol.setCellValueFactory(new PropertyValueFactory<File, String>("lengthP"));
 		lengthCol.setSortable(false);
 		lengthCol.setResizable(false);
 
@@ -364,7 +366,7 @@ public class MainView {
 	}
 
 	private void initTreeView() {
-		rootNode = new TreeItem<>("C:", new ImageView(Utility.diskImg));
+		rootNode = new TreeItem<>("C:", new ImageView(FATUtil.diskImg));
 		rootNode.setExpanded(true);
 
 		recentNode = rootNode;
@@ -374,6 +376,23 @@ public class MainView {
 		treeView.setPrefWidth(200);
 		treeView.setCellFactory((TreeView<String> p) -> new TextFieldTreeCellImpl());
 		treeView.setStyle("-fx-background-color: #ffffff;" + "-fx-border-color: #d3d3d3;" + "-fx-border-width:0.5px;");
+		
+		for (Path path : fat.getPaths()) {
+			System.out.println(path);
+			if (path.hasParent() && path.getParent().getPathName().equals(rootNode.getValue())) {
+				initTreeNode(path, rootNode);
+			}
+		}
+		addIcon(fat.getBlockList(recentPath), recentPath);
+	}
+	
+	private void initTreeNode(Path newPath, TreeItem<String> parentNode) {
+		TreeItem<String> newNode = addNode(parentNode, newPath);
+		if (newPath.hasChild()) {
+			for (Path child : newPath.getChildren()) {
+				initTreeNode(child, newNode);
+			}
+		}
 	}
 
 	private void addIcon(List<DiskBlock> bList, String path) {
@@ -383,9 +402,9 @@ public class MainView {
 		for (int i = 0; i < n; i++) {
 			if (bList.get(i).getObject() instanceof Folder) {
 				icons[i] = new Label(((Folder) bList.get(i).getObject()).getFolderName(),
-						new ImageView(Utility.folderImg));
+						new ImageView(FATUtil.folderImg));
 			} else {
-				icons[i] = new Label(((File) bList.get(i).getObject()).getFileName(), new ImageView(Utility.fileImg));
+				icons[i] = new Label(((File) bList.get(i).getObject()).getFileName(), new ImageView(FATUtil.fileImg));
 			}
 			icons[i].setContentDisplay(ContentDisplay.TOP);
 			icons[i].setWrapText(true);
@@ -394,7 +413,6 @@ public class MainView {
 
 				@Override
 				public void handle(MouseEvent event) {
-					// TODO Auto-generated method stub
 					((Label) event.getSource()).setStyle("-fx-background-color: #f0f8ff;");
 				}
 			});
@@ -402,7 +420,6 @@ public class MainView {
 
 				@Override
 				public void handle(MouseEvent event) {
-					// TODO Auto-generated method stub
 					((Label) event.getSource()).setStyle("-fx-background-color: #ffffff;");
 				}
 			});
@@ -410,7 +427,6 @@ public class MainView {
 
 				@Override
 				public void handle(MouseEvent event) {
-					// TODO Auto-generated method stub
 					Label src = (Label) event.getSource();
 					for (int j = 0; j < n; j++) {
 						if (src == icons[j]) {
@@ -429,13 +445,14 @@ public class MainView {
 		}
 	}
 
-	private void addNode(TreeItem<String> parentNode, Path newPath) {
+	private TreeItem<String> addNode(TreeItem<String> parentNode, Path newPath) {
 		String pathName = newPath.getPathName();
 		String value = pathName.substring(pathName.lastIndexOf('\\') + 1);
-		TreeItem<String> newNode = new TreeItem<String>(value, new ImageView(Utility.treeNodeImg));
+		TreeItem<String> newNode = new TreeItem<String>(value, new ImageView(FATUtil.treeNodeImg));
 		newNode.setExpanded(true);
 		pathMap.put(newPath, newNode);
 		parentNode.getChildren().add(newNode);
+		return newNode;
 	}
 
 	public void removeNode(TreeItem<String> recentNode, Path remPath) {
@@ -451,17 +468,17 @@ public class MainView {
 		this.recentNode = recentNode;
 	}
 
-	public void refreshBlockTable() {
-		dataBlock = FXCollections.observableArrayList(fat.getDiskBlocks());
-		blockTable.setItems(dataBlock);
-		blockTable.refresh();
-	}
+//	public void refreshBlockTable() {
+//		dataBlock = FXCollections.observableArrayList(fat.getDiskBlocks());
+//		blockTable.setItems(dataBlock);
+//		blockTable.refresh();
+//	}
 
-	public void refreshOpenedTable() {
-		dataOpened = FXCollections.observableArrayList(fat.getOpenedFiles());
-		openedTable.setItems(dataOpened);
-		openedTable.refresh();
-	}
+//	public void refreshOpenedTable() {
+//		dataOpened = FXCollections.observableArrayList(fat.getOpenedFiles());
+//		openedTable.setItems(dataOpened);
+//		openedTable.refresh();
+//	}
 
 	private void onOpen() {
 		DiskBlock thisBlock = blockList.get(index);
@@ -474,9 +491,8 @@ public class MainView {
 					Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
 					duplicate.showAndWait();
 				} else {
-					fat.addOpenedFile(thisBlock, Utility.FLAGWRITE);
-					refreshOpenedTable();
-					new FileView((File) thisBlock.getObject(), fat, thisBlock, MainView.this);
+					fat.addOpenedFile(thisBlock, FATUtil.FLAGWRITE);
+					new FileView((File) thisBlock.getObject(), fat, thisBlock);
 				}
 			} else {
 				Alert exceed = new Alert(AlertType.ERROR, "文件打开已到上限");
@@ -490,9 +506,8 @@ public class MainView {
 			locField.setText(newPath);
 			recentPath = newPath;
 			recentNode = pathMap.get(thisFolder.getPath());
-			// System.out.println(recentPath);
 		}
-	}
+	}	
 
 	public final class TextFieldTreeCellImpl extends TreeCell<String> {
 
@@ -503,7 +518,6 @@ public class MainView {
 			this.setOnMouseClicked(new EventHandler<MouseEvent>() {
 				@Override
 				public void handle(MouseEvent event) {
-					// TODO Auto-generated method stub
 					if (event.getButton() == MouseButton.PRIMARY && event.getClickCount() == 1) {
 						if (getTreeItem() != null) {
 							String pathName = null;

@@ -24,7 +24,7 @@ import model.FAT;
 import model.File;
 import model.Folder;
 import model.Path;
-import model.Utility;
+import util.FATUtil;
 
 /**
 * @author Kit
@@ -36,7 +36,6 @@ public class PropertyView {
 	private DiskBlock block;
 	private FAT fat;
 	private Label icon;
-	private MainView mainView;
 	private Map<Path, TreeItem<String>> pathMap;
 	private String oldName, location;
 	private Stage stage;
@@ -50,12 +49,10 @@ public class PropertyView {
 	private Button okButton, cancelButton, applyButton;
 	private Image ico;
 	
-	public PropertyView(DiskBlock block, FAT fat, Label icon,
-			MainView mainView, Map<Path, TreeItem<String>> pathMap) {
+	public PropertyView(DiskBlock block, FAT fat, Label icon, Map<Path, TreeItem<String>> pathMap) {
 		this.block = block;
 		this.fat = fat;
 		this.icon = icon;
-		this.mainView = mainView;
 		this.pathMap = pathMap;
 		showView();
 	}
@@ -71,7 +68,7 @@ public class PropertyView {
 			timeField = new Label(folder.getCreateTime());
 			oldName = folder.getFolderName();
 			location = folder.getLocation();
-			ico = new Image(Utility.folderImg);
+			ico = new Image(FATUtil.folderImg);
 		} else {
 			File file = (File)block.getObject();
 			nameField = new TextField(file.getFileName());
@@ -82,14 +79,13 @@ public class PropertyView {
 			timeField = new Label(file.getCreateTime());
 			oldName = file.getFileName();
 			location = file.getLocation();
-			ico = new Image(Utility.fileImg);
+			ico = new Image(FATUtil.fileImg);
 		}
 		
 		nameField.textProperty().addListener(new ChangeListener<String>() {
 
 			@Override
 			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				// TODO Auto-generated method stub
 				if (newValue == null || newValue.equals(oldValue)) {
 					applyButton.setDisable(true);
 				} else {
@@ -105,7 +101,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				okButton.setStyle("-fx-background-color: #808080;");
 			}
 		});
@@ -113,7 +108,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				okButton.setStyle("-fx-background-color: #d3d3d3;");
 			}
 		});
@@ -125,7 +119,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				cancelButton.setStyle("-fx-background-color: #ffffff;");
 			}
 		});
@@ -133,7 +126,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				cancelButton.setStyle("-fx-background-color: #d3d3d3;");
 			}
 		});
@@ -145,7 +137,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				applyButton.setStyle("-fx-background-color: #808080;");
 			}
 		});
@@ -153,7 +144,6 @@ public class PropertyView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				applyButton.setStyle("-fx-background-color: #d3d3d3;");
 			}
 		});
@@ -214,7 +204,7 @@ public class PropertyView {
 					}
 					oldName = newName;
 					icon.setText(newName);
-					mainView.refreshBlockTable();
+//					mainView.refreshBlockTable();
 					applyButton.setDisable(true);
 				}				
 			}			
@@ -240,7 +230,7 @@ public class PropertyView {
 						((File)block.getObject()).setFileName(newName);
 					}
 					icon.setText(newName);
-					mainView.refreshBlockTable();
+//					mainView.refreshBlockTable();
 				}
 			}
 			stage.close();

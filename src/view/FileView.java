@@ -23,7 +23,7 @@ import model.DiskBlock;
 import model.FAT;
 import model.File;
 import model.Folder;
-import model.Utility;
+import util.FATUtil;
 
 /**
  * @author Kit
@@ -35,7 +35,6 @@ public class FileView {
 	private File file;
 	private FAT fat;
 	private DiskBlock block;
-	private MainView mainView;
 	private String newContent, oldContent;
 	private Stage stage;
 	private Scene scene;
@@ -45,23 +44,21 @@ public class FileView {
 	private Menu fileMenu;
 	private MenuItem saveItem, closeItem;
 
-	public FileView(File file, FAT fat, DiskBlock block, MainView mainView) {
+	public FileView(File file, FAT fat, DiskBlock block) {
 		this.file = file;
 		this.fat = fat;
 		this.block = block;
-		this.mainView = mainView;
 		showView();
 	}
 
 	private void showView() {
-		//System.out.println(file.getParent());
 		contentField = new TextArea();
 		contentField.setPrefRowCount(25);
 		contentField.setWrapText(true);
 		contentField.setText(file.getContent());
 
 		saveItem = new MenuItem("保存");
-		saveItem.setGraphic(new ImageView(Utility.saveImg));
+		saveItem.setGraphic(new ImageView(FATUtil.saveImg));
 		saveItem.setOnAction(ActionEvent -> {
 			newContent = contentField.getText();
 			oldContent = file.getContent();
@@ -74,7 +71,7 @@ public class FileView {
 		});
 		
 		closeItem = new MenuItem("关闭");
-		closeItem.setGraphic(new ImageView(Utility.closeImg));
+		closeItem.setGraphic(new ImageView(FATUtil.closeImg));
 		closeItem.setOnAction(ActionEvent -> onClose(ActionEvent));		
 		
 		fileMenu = new Menu("File", null, saveItem, closeItem);
@@ -87,12 +84,12 @@ public class FileView {
 		stage = new Stage();
 		stage.setScene(scene);
 		stage.setTitle(file.getFileName());
-		stage.getIcons().add(new Image(Utility.fileImg));
+		stage.titleProperty().bind(file.fileNamePProperty());
+		stage.getIcons().add(new Image(FATUtil.fileImg));
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
 			@Override
 			public void handle(WindowEvent event) {
-				// TODO Auto-generated method stub
 				onClose(event);
 			}
 		});
@@ -126,28 +123,25 @@ public class FileView {
 		}
 		if (!isCancel) {
 			fat.removeOpenedFile(block);
-			mainView.refreshOpenedTable();
 			stage.close();
 		}
 	}
 	
 	private void saveContent(String newContent) {
 		int newLength = newContent.length();
-		int blockCount = Utility.blocksCount(newLength);
+		int blockCount = FATUtil.blocksCount(newLength);
 		file.setLength(blockCount);
 		file.setContent(newContent);
-		file.setSize(Utility.getSize(newLength));
+		file.setSize(FATUtil.getSize(newLength));
 		if (file.hasParent()) {
 			Folder parent = (Folder) file.getParent();
-			parent.setSize(Utility.getFolderSize(parent));
+			parent.setSize(FATUtil.getFolderSize(parent));
 			while (parent.hasParent()) {
 				parent = (Folder) parent.getParent();
-				parent.setSize(Utility.getFolderSize(parent));
+				parent.setSize(FATUtil.getFolderSize(parent));
 			}
 		}
 		fat.reallocBlocks(blockCount, block);
-		mainView.refreshBlockTable();
-		mainView.refreshOpenedTable();
 	}
 	
 }

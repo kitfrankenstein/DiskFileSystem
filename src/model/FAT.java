@@ -1,17 +1,30 @@
 package model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
+
+import javafx.collections.FXCollections;
+import javafx.collections.ObservableList;
+import util.FATUtil;
 
 /**
  * @author Kit
  * @version: 2018年9月25日 下午11:39:46
  * 文件分配表类，包含管理盘块、文件、路径等相关操作
  */
-public class FAT {
+public class FAT implements Serializable{
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
+	
 	private DiskBlock[] diskBlocks;
-	private List<File> openedFiles;
+	private transient ObservableList<File> openedFiles;
 	private Folder c;
 	private Path rootPath = new Path("C:", null);
 	private List<Path> paths;
@@ -19,13 +32,13 @@ public class FAT {
 	public FAT() {
 		c = new Folder("C:", "root", 0, null);
 		diskBlocks = new DiskBlock[128];
-		diskBlocks[0] = new DiskBlock(0, Utility.END, Utility.DISK, c);
+		diskBlocks[0] = new DiskBlock(0, FATUtil.END, FATUtil.DISK, c);
 		diskBlocks[0].setBegin(true);
-		diskBlocks[1] = new DiskBlock(1, Utility.END, Utility.DISK, c);
+		diskBlocks[1] = new DiskBlock(1, FATUtil.END, FATUtil.DISK, c);
 		for (int i = 2; i < 128; i++) {
-			diskBlocks[i] = new DiskBlock(i, Utility.FREE, Utility.EMPTY, null);
+			diskBlocks[i] = new DiskBlock(i, FATUtil.FREE, FATUtil.EMPTY, null);
 		}
-		openedFiles = new ArrayList<File>();
+		openedFiles = FXCollections.observableArrayList(new ArrayList<File>());
 		paths = new ArrayList<Path>();
 		paths.add(rootPath);
 		c.setPath(rootPath);
@@ -77,7 +90,7 @@ public class FAT {
 			folderName += index;
 			for (int i = 2; i < diskBlocks.length; i++) {
 				if (!diskBlocks[i].isFree()) {
-					if (diskBlocks[i].getType() == Utility.FOLDER) {
+					if (diskBlocks[i].getType() == FATUtil.FOLDER) {
 						Folder folder = (Folder) diskBlocks[i].getObject();
 						if (path.equals(folder.getLocation())) {
 							if (folderName.equals(folder.getFolderName())) {
@@ -90,15 +103,15 @@ public class FAT {
 			index++;
 		} while (!canName);
 		int index2 = searchEmptyDiskBlock();
-		if (index2 == Utility.ERROR) {
-			return Utility.ERROR;
+		if (index2 == FATUtil.ERROR) {
+			return FATUtil.ERROR;
 		} else {
 			Folder parent = getFolder(path);
 			Folder folder = new Folder(folderName, path, index2, parent);
 			if (parent instanceof Folder) {
 				parent.addChildren(folder);
 			}
-			diskBlocks[index2].allocBlock(Utility.END, Utility.FOLDER, folder, true);
+			diskBlocks[index2].allocBlock(FATUtil.END, FATUtil.FOLDER, folder, true);
 			Path parentP = getPath(path);
 			Path thisPath = new Path(path + "\\" + folderName, parentP);
 			if (parentP != null) {
@@ -126,7 +139,7 @@ public class FAT {
 			fileName += index;
 			for (int i = 2; i < diskBlocks.length; i++) {
 				if (!diskBlocks[i].isFree()) {
-					if (diskBlocks[i].getType() == Utility.FILE) {
+					if (diskBlocks[i].getType() == FATUtil.FILE) {
 						File file = (File) diskBlocks[i].getObject();
 						if (path.equals(file.getLocation())) {
 							if (fileName.equals(file.getFileName())) {
@@ -139,15 +152,15 @@ public class FAT {
 			index++;
 		} while (!canName);
 		int index2 = searchEmptyDiskBlock();
-		if (index2 == Utility.ERROR) {
-			return Utility.ERROR;
+		if (index2 == FATUtil.ERROR) {
+			return FATUtil.ERROR;
 		} else {
 			Folder parent = getFolder(path);
 			File file = new File(fileName, path, index2, parent);
 			if (parent instanceof Folder) {
 				parent.addChildren(file);
 			}
-			diskBlocks[index2].allocBlock(Utility.END, Utility.FILE, file, true);
+			diskBlocks[index2].allocBlock(FATUtil.END, FATUtil.FILE, file, true);
 		}
 		return index2;
 	}
@@ -162,7 +175,7 @@ public class FAT {
 				return i;
 			}
 		}
-		return Utility.ERROR;
+		return FATUtil.ERROR;
 	}
 
 	/**
@@ -204,9 +217,9 @@ public class FAT {
 		int begin = thisFile.getDiskNum();
 		int index = diskBlocks[begin].getIndex();
 		int oldNum = 1;
-		while (index != Utility.END) {
+		while (index != FATUtil.END) {
 			oldNum++;
-			if (diskBlocks[index].getIndex() == Utility.END) {
+			if (diskBlocks[index].getIndex() == FATUtil.END) {
 				begin = index;
 			}
 			index = diskBlocks[index].getIndex();
@@ -224,9 +237,9 @@ public class FAT {
 			for (int i = 1; i <= n; i++) {
 				space = searchEmptyDiskBlock();
 				if (i == n) {
-					diskBlocks[space].allocBlock(Utility.END, Utility.FILE, thisFile, false);
+					diskBlocks[space].allocBlock(FATUtil.END, FATUtil.FILE, thisFile, false);
 				} else {
-					diskBlocks[space].allocBlock(Utility.END, Utility.FILE, thisFile, false);// 同一个文件的所有磁盘块拥有相同的对象
+					diskBlocks[space].allocBlock(FATUtil.END, FATUtil.FILE, thisFile, false);// 同一个文件的所有磁盘块拥有相同的对象
 					int space2 = searchEmptyDiskBlock();
 					diskBlocks[space].setIndex(space2);
 				}
@@ -240,11 +253,11 @@ public class FAT {
 				num--;
 			}
 			int next = 0;
-			for (int i = diskBlocks[end].getIndex(); i != Utility.END; i = next) {
+			for (int i = diskBlocks[end].getIndex(); i != FATUtil.END; i = next) {
 				next = diskBlocks[i].getIndex();
 				diskBlocks[i].clearBlock();
 			}
-			diskBlocks[end].setIndex(Utility.END);
+			diskBlocks[end].setIndex(FATUtil.END);
 		} else {
 			// 不变
 		}
@@ -351,10 +364,10 @@ public class FAT {
 			Folder parent = thisFile.getParent();
 			if (parent instanceof Folder) {
 				parent.removeChildren(thisFile);
-				parent.setSize(Utility.getFolderSize(parent));
+				parent.setSize(FATUtil.getFolderSize(parent));
 				while (parent.hasParent()) {
 					parent = parent.getParent();
-					parent.setSize(Utility.getFolderSize(parent));
+					parent.setSize(FATUtil.getFolderSize(parent));
 				}
 			}
 			for (int i = 2; i < diskBlocks.length; i++) {
@@ -374,7 +387,7 @@ public class FAT {
 			for (int i = 2; i < diskBlocks.length; i++) {
 				if (!diskBlocks[i].isFree()) {
 					Object obj = diskBlocks[i].getObject();
-					if (diskBlocks[i].getType() == Utility.FOLDER) {
+					if (diskBlocks[i].getType().equals(FATUtil.FOLDER)) {
 						if (((Folder) obj).getLocation().equals(folderPath)) {
 							// 文件夹不为空，不能删除
 							return 2;
@@ -385,7 +398,7 @@ public class FAT {
 							return 2;
 						}
 					}
-					if (diskBlocks[i].getType() == Utility.FOLDER) {
+					if (diskBlocks[i].getType().equals(FATUtil.FOLDER)) {
 						if (((Folder) diskBlocks[i].getObject()).equals(block.getObject())) {
 							index = i;
 						}
@@ -396,7 +409,7 @@ public class FAT {
 			Folder parent = thisFolder.getParent();
 			if (parent instanceof Folder) {
 				parent.removeChildren(thisFolder);
-				parent.setSize(Utility.getFolderSize(parent));
+				parent.setSize(FATUtil.getFolderSize(parent));
 			}
 			paths.remove(getPath(folderPath));
 			diskBlocks[index].clearBlock();
@@ -421,11 +434,11 @@ public class FAT {
 		return diskBlocks[index];
 	}
 
-	public List<File> getOpenedFiles() {
+	public ObservableList<File> getOpenedFiles() {
 		return openedFiles;
 	}
 
-	public void setOpenedFiles(List<File> openFiles) {
+	public void setOpenedFiles(ObservableList<File> openFiles) {
 		this.openedFiles = openFiles;
 	}
 
@@ -476,5 +489,10 @@ public class FAT {
 		}		
 		return false;
 	}
+	
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    	s.defaultReadObject();
+		openedFiles = FXCollections.observableArrayList(new ArrayList<File>());
+    }
 
 }

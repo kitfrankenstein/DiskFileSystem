@@ -1,13 +1,16 @@
-package model;
+package util;
 
 import java.util.List;
+
+import model.File;
+import model.Folder;
 
 /**
 * @author Kit
 * @version: 2018年9月25日 下午11:32:55
 * 
 */
-public class Utility {
+public class FATUtil {
 	
 	public static String ico = "res/ico.png";
 	public static String folderImg = "res/folder.png";

@@ -1,15 +1,27 @@
 package model;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.Serializable;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+import util.FATUtil;
 
 /**
  * @author Kit
  * @version: 2018年9月25日 下午11:25:54
  * 
  */
-public class File {
+public class File implements Serializable {
 
+	/**
+	 * 
+	 */
+	private static final long serialVersionUID = 1L;
+	
 	private String fileName;//文件名
 	private String type;// 类型
 	private int diskNum;// 起始盘块号
@@ -25,27 +37,75 @@ public class File {
 	private Date createTime;//创建时间
 	
 	private boolean isOpen;//打开标志
+	
+	private transient StringProperty fileNameP = new SimpleStringProperty();
+	private transient StringProperty flagP = new SimpleStringProperty();
+	private transient StringProperty diskNumP = new SimpleStringProperty();
+	private transient StringProperty locationP = new SimpleStringProperty();
+	private transient StringProperty lengthP = new SimpleStringProperty();
+	
+	//UI获取property
+	public StringProperty fileNamePProperty() {
+		return fileNameP;
+	}
+	public StringProperty flagPProperty() {
+		return flagP;
+	}
+	public StringProperty diskNumPProperty() {
+		return diskNumP;
+	}
+	public StringProperty locationPProperty() {
+		return locationP;
+	}
+	public StringProperty lengthPProperty() {
+		return lengthP;
+	}
+    
+	//设置property
+	private void setFileNameP() {
+		this.fileNameP.set(fileName);
+	}
+	private void setFlagP() {
+		this.flagP.set(String.valueOf(flag));
+	}
+	private void setDiskNumP() {
+		this.diskNumP.set(String.valueOf(diskNum));
+	}
+	private void setLocationP() {
+		this.locationP.set(location);
+	}
+	private void setLengthP() {
+		this.lengthP.set(String.valueOf(length));
+	}
 
 	public File(String fileName) {
 		this.fileName = fileName;
 		this.setOpened(false);
+		
+		setFileNameP();
 	}
 
 	public File(String fileName, String location, int diskNum, Folder parent) {
 		this.fileName = fileName;
-		this.type = Utility.FILE;
+		this.type = FATUtil.FILE;
 		this.diskNum = diskNum;
 		this.length = 1;
 		this.content = "";
 
 		this.location = location;
-		this.size = Utility.getSize(content.length());
+		this.size = FATUtil.getSize(content.length());
 		this.space = size + "KB";
 		this.createTime = new Date();
 
 		this.parent = parent;
 		
 		this.setOpened(false);
+		
+		setFileNameP();
+		setFlagP();
+		setDiskNumP();
+		setLocationP();
+		setLengthP();
 	}
 
 	public String getFileName() {
@@ -54,6 +114,7 @@ public class File {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+		setFileNameP();
 	}
 
 	public String getType() {
@@ -70,6 +131,7 @@ public class File {
 
 	public void setDiskNum(int diskNum) {
 		this.diskNum = diskNum;
+		setDiskNumP();
 	}
 
 	public int getFlag() {
@@ -78,6 +140,7 @@ public class File {
 
 	public void setFlag(int flag) {
 		this.flag = flag;
+		setFlagP();
 	}
 
 	public int getLength() {
@@ -86,6 +149,7 @@ public class File {
 
 	public void setLength(int length) {
 		this.length = length;
+		setLengthP();
 	}
 
 	public String getContent() {
@@ -102,6 +166,7 @@ public class File {
 
 	public void setLocation(String location) {
 		this.location = location;
+		setLocationP();
 	}
 
 	public double getSize() {
@@ -149,6 +214,15 @@ public class File {
 	public void setOpened(boolean isOpen) {
 		this.isOpen = isOpen;
 	}
+	
+    private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
+    	s.defaultReadObject();
+    	fileNameP = new SimpleStringProperty(fileName);
+    	flagP = new SimpleStringProperty(String.valueOf(flag));
+    	diskNumP = new SimpleStringProperty(String.valueOf(type));
+    	locationP = new SimpleStringProperty(location);
+    	lengthP = new SimpleStringProperty(String.valueOf(length));
+    }
 
 	@Override
 	public String toString() {

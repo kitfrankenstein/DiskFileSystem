@@ -31,7 +31,6 @@ public class RenameView {
 	private DiskBlock block;
 	private FAT fat;
 	private Label icon;
-	private MainView mainView;
 	private Map<Path, TreeItem<String>> pathMap;
 	private Stage stage;
 	private Scene scene;
@@ -40,13 +39,10 @@ public class RenameView {
 	private Button okButton, cancelButton;
 	private String oldName, location;
 
-	public RenameView(DiskBlock block, FAT fat, Label icon,
-			MainView mainView, Map<Path, TreeItem<String>> pathMap) {
-		// TODO Auto-generated constructor stub
+	public RenameView(DiskBlock block, FAT fat, Label icon, Map<Path, TreeItem<String>> pathMap) {
 		this.block = block;
 		this.fat = fat;
 		this.icon = icon;
-		this.mainView = mainView;
 		this.pathMap = pathMap;
 		showView();
 	}
@@ -68,7 +64,6 @@ public class RenameView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				okButton.setStyle("-fx-background-color: #ffffff;");
 			}
 		});
@@ -76,7 +71,6 @@ public class RenameView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				okButton.setStyle("-fx-background-color: #d3d3d3;");
 			}
 		});
@@ -98,7 +92,6 @@ public class RenameView {
 						((File) block.getObject()).setFileName(newName);
 					}
 					icon.setText(newName);
-					mainView.refreshBlockTable();	
 				}					
 			}
 			stage.close();
@@ -110,7 +103,6 @@ public class RenameView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				cancelButton.setStyle("-fx-background-color: #ffffff;");
 			}
 		});
@@ -118,7 +110,6 @@ public class RenameView {
 
 			@Override
 			public void handle(MouseEvent event) {
-				// TODO Auto-generated method stub
 				cancelButton.setStyle("-fx-background-color: #d3d3d3;");
 			}
 		});
