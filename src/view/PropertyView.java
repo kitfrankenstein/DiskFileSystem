@@ -10,7 +10,10 @@ import javafx.scene.Scene;
 import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
+import javafx.scene.control.RadioButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.control.TreeItem;
 import javafx.scene.image.Image;
 import javafx.scene.control.Alert.AlertType;
@@ -47,7 +50,10 @@ public class PropertyView {
 	private Label typeField, locField, sizeField,
 					spaceField, timeField;
 	private Button okButton, cancelButton, applyButton;
+	private final ToggleGroup toggleGroup = new ToggleGroup();
 	private Image ico;
+	
+	private String name;
 	
 	public PropertyView(DiskBlock block, FAT fat, Label icon, Map<Path, TreeItem<String>> pathMap) {
 		this.block = block;
@@ -57,7 +63,18 @@ public class PropertyView {
 		showView();
 	}
 	
-	private void showView() {
+	private void showView() {		
+		RadioButton checkRead = new RadioButton("只读");
+		checkRead.setToggleGroup(toggleGroup);
+		checkRead.setUserData(FATUtil.FLAGREAD);
+		
+		RadioButton checkWrite = new RadioButton("读写");
+		checkWrite.setToggleGroup(toggleGroup);
+		checkWrite.setUserData(FATUtil.FLAGWRITE);
+		
+		HBox checkBoxGroup = new HBox(checkRead, checkWrite);
+		checkBoxGroup.setSpacing(10);
+		
 		if (block.getObject() instanceof Folder) {
 			Folder folder = (Folder)block.getObject();
 			nameField = new TextField(folder.getFolderName());
@@ -68,7 +85,9 @@ public class PropertyView {
 			timeField = new Label(folder.getCreateTime());
 			oldName = folder.getFolderName();
 			location = folder.getLocation();
-			ico = new Image(FATUtil.folderImg);
+			checkRead.setDisable(true);
+			checkWrite.setDisable(true);
+			ico = new Image(FATUtil.FOLDER_IMG);
 		} else {
 			File file = (File)block.getObject();
 			nameField = new TextField(file.getFileName());
@@ -79,20 +98,11 @@ public class PropertyView {
 			timeField = new Label(file.getCreateTime());
 			oldName = file.getFileName();
 			location = file.getLocation();
-			ico = new Image(FATUtil.fileImg);
+			toggleGroup.selectToggle(file.getFlag() == FATUtil.FLAGREAD ? checkRead : checkWrite);
+			ico = new Image(FATUtil.FILE_IMG);
 		}
 		
-		nameField.textProperty().addListener(new ChangeListener<String>() {
-
-			@Override
-			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
-				if (newValue == null || newValue.equals(oldValue)) {
-					applyButton.setDisable(true);
-				} else {
-					applyButton.setDisable(false);
-				}
-			}
-		});
+		name = nameField.getText();
 		
 		okButton = new Button("确定");
 		okButton.setPrefSize(100, 20);
@@ -150,6 +160,27 @@ public class PropertyView {
 		
 		buttonOnAction();
 		
+		nameField.textProperty().addListener(new ChangeListener<String>() {
+
+			@Override
+			public void changed(ObservableValue<? extends String> observable, String oldValue, String newValue) {
+				if (newValue.equals("") || newValue.equals(name)) {
+					applyButton.setDisable(true);
+					okButton.setDisable(true);
+				} else {
+					applyButton.setDisable(false);
+				}
+			}
+		});
+		
+		toggleGroup.selectedToggleProperty().addListener(new ChangeListener<Toggle>() {
+
+			@Override
+			public void changed(ObservableValue<? extends Toggle> observable, Toggle oldValue, Toggle newValue) {
+				applyButton.setDisable(false);
+			}
+		});
+		
 		hBox = new HBox(okButton, cancelButton, applyButton);
 		hBox.setPadding(new Insets(15, 12, 5, 12));
 		hBox.setSpacing(10);
@@ -161,12 +192,14 @@ public class PropertyView {
 		gridPane.add(new Label("大小:"), 0, 3);
 		gridPane.add(new Label("占用空间:"), 0, 4);
 		gridPane.add(new Label("建立时间:"), 0, 5);
+		gridPane.add(new Label("属性:"), 0, 6);
 		gridPane.add(nameField, 1, 0);
 		gridPane.add(typeField, 1, 1);
 		gridPane.add(locField, 1, 2);
 		gridPane.add(sizeField, 1, 3);
 		gridPane.add(spaceField, 1, 4);
 		gridPane.add(timeField, 1, 5);
+		gridPane.add(checkBoxGroup, 1, 6);
 		gridPane.setPadding(new Insets(15, 12, 0, 12));
 		gridPane.setVgap(10);
 		gridPane.setHgap(10);
@@ -204,10 +237,14 @@ public class PropertyView {
 					}
 					oldName = newName;
 					icon.setText(newName);
-//					mainView.refreshBlockTable();
-					applyButton.setDisable(true);
 				}				
-			}			
+			}
+			if (block.getObject() instanceof File) {
+				File thisFile = ((File)block.getObject());
+				int newFlag = toggleGroup.getSelectedToggle().getUserData().hashCode();
+				thisFile.setFlag(newFlag);
+			}
+			applyButton.setDisable(true);
 		});
 		cancelButton.setOnAction(ActionEvent -> {
 			stage.close();
@@ -219,7 +256,7 @@ public class PropertyView {
 					Alert alert = new Alert(AlertType.ERROR);
 					alert.setHeaderText(null);
 					alert.setContentText("此位置已包含同名文件/文件夹");
-					alert.show();
+					alert.showAndWait();
 				} else {
 					if (block.getObject() instanceof Folder) {
 						Folder thisFolder = (Folder)block.getObject();
@@ -230,8 +267,12 @@ public class PropertyView {
 						((File)block.getObject()).setFileName(newName);
 					}
 					icon.setText(newName);
-//					mainView.refreshBlockTable();
 				}
+			}
+			if (block.getObject() instanceof File) {
+				File thisFile = ((File)block.getObject());
+				int newFlag = toggleGroup.getSelectedToggle().getUserData().hashCode();
+				thisFile.setFlag(newFlag);
 			}
 			stage.close();
 		});

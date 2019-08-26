@@ -12,27 +12,27 @@ import model.Folder;
 */
 public class FATUtil {
 	
-	public static String ico = "res/ico.png";
-	public static String folderImg = "res/folder.png";
-	public static String fileImg = "res/file.png";
-	public static String diskImg = "res/disk.png";
-	public static String treeNodeImg = "res/node.png";
-	public static String forwardImg = "res/forward.png";
-	public static String backImg = "res/back.png";
-	public static String saveImg = "res/save.png";
-	public static String closeImg = "res/close.png";
+	public static final String ICO = "res/ico.png";
+	public static final String FOLDER_IMG = "res/folder.png";
+	public static final String FILE_IMG = "res/file.png";
+	public static final String DISK_IMG = "res/disk.png";
+	public static final String TREE_NODE_IMG = "res/node.png";
+	public static final String FORWARD_IMG = "res/forward.png";
+	public static final String BACK_IMG = "res/back.png";
+	public static final String SAVE_IMG = "res/save.png";
+	public static final String CLOSE_IMG = "res/close.png";
 	
-	public static int END = 255;
-	public static int ERROR = -1;
-	public static int FREE = 0;
+	public static final int END = 255;
+	public static final int ERROR = -1;
+	public static final int FREE = 0;
 	
-	public static String DISK = "磁盘";
-	public static String FOLDER = "文件夹";
-	public static String FILE = "文件";
-	public static String EMPTY = "空";
+	public static final String DISK = "磁盘";
+	public static final String FOLDER = "文件夹";
+	public static final String FILE = "文件";
+	public static final String EMPTY = "空";
 			
-	public static int FLAGREAD = 0;
-	public static int FLAGWRITE = 1;	
+	public static final int FLAGREAD = 0;
+	public static final int FLAGWRITE = 1;	
 	
 	
 	public static int blocksCount(int length){

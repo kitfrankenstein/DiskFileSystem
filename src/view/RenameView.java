@@ -81,7 +81,7 @@ public class RenameView {
 					Alert alert = new Alert(AlertType.ERROR);
 					alert.setHeaderText(null);
 					alert.setContentText("此位置已包含同名文件/文件夹");
-					alert.show();
+					alert.showAndWait();
 				} else {
 					if (block.getObject() instanceof Folder) {
 						Folder thisFolder = (Folder) block.getObject();

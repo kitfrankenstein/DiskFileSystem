@@ -128,7 +128,7 @@ public class MainView {
 		scene = new Scene(fullBox);
 		stage.setScene(scene);
 		stage.setResizable(false);
-		stage.getIcons().add(new Image(FATUtil.ico));
+		stage.getIcons().add(new Image(FATUtil.ICO));
 		stage.setTitle("模拟磁盘文件系统");
 		stage.show();
 		stage.setOnCloseRequest(e -> {
@@ -232,7 +232,7 @@ public class MainView {
 				locField.setText(recentPath);
 			}
 		});
-		backButton.setGraphic(new ImageView(FATUtil.backImg));
+		backButton.setGraphic(new ImageView(FATUtil.BACK_IMG));
 		backButton.setStyle("-fx-background-color: #ffffff;");
 		backButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
 
@@ -267,7 +267,7 @@ public class MainView {
 				locField.setText(recentPath);
 			}
 		});
-		gotoButton.setGraphic(new ImageView(FATUtil.forwardImg));
+		gotoButton.setGraphic(new ImageView(FATUtil.FORWARD_IMG));
 		gotoButton.setStyle("-fx-background-color: #ffffff;");
 		gotoButton.setOnMouseEntered(new EventHandler<MouseEvent>() {
 
@@ -366,7 +366,7 @@ public class MainView {
 	}
 
 	private void initTreeView() {
-		rootNode = new TreeItem<>("C:", new ImageView(FATUtil.diskImg));
+		rootNode = new TreeItem<>("C:", new ImageView(FATUtil.DISK_IMG));
 		rootNode.setExpanded(true);
 
 		recentNode = rootNode;
@@ -402,9 +402,9 @@ public class MainView {
 		for (int i = 0; i < n; i++) {
 			if (bList.get(i).getObject() instanceof Folder) {
 				icons[i] = new Label(((Folder) bList.get(i).getObject()).getFolderName(),
-						new ImageView(FATUtil.folderImg));
+						new ImageView(FATUtil.FOLDER_IMG));
 			} else {
-				icons[i] = new Label(((File) bList.get(i).getObject()).getFileName(), new ImageView(FATUtil.fileImg));
+				icons[i] = new Label(((File) bList.get(i).getObject()).getFileName(), new ImageView(FATUtil.FILE_IMG));
 			}
 			icons[i].setContentDisplay(ContentDisplay.TOP);
 			icons[i].setWrapText(true);
@@ -448,7 +448,7 @@ public class MainView {
 	private TreeItem<String> addNode(TreeItem<String> parentNode, Path newPath) {
 		String pathName = newPath.getPathName();
 		String value = pathName.substring(pathName.lastIndexOf('\\') + 1);
-		TreeItem<String> newNode = new TreeItem<String>(value, new ImageView(FATUtil.treeNodeImg));
+		TreeItem<String> newNode = new TreeItem<String>(value, new ImageView(FATUtil.TREE_NODE_IMG));
 		newNode.setExpanded(true);
 		pathMap.put(newPath, newNode);
 		parentNode.getChildren().add(newNode);
@@ -491,7 +491,7 @@ public class MainView {
 					Alert duplicate = new Alert(AlertType.ERROR, "文件已打开");
 					duplicate.showAndWait();
 				} else {
-					fat.addOpenedFile(thisBlock, FATUtil.FLAGWRITE);
+					fat.addOpenedFile(thisBlock);
 					new FileView((File) thisBlock.getObject(), fat, thisBlock);
 				}
 			} else {

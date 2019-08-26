@@ -56,9 +56,12 @@ public class FileView {
 		contentField.setPrefRowCount(25);
 		contentField.setWrapText(true);
 		contentField.setText(file.getContent());
+		if (file.getFlag() == FATUtil.FLAGREAD) {
+			contentField.setDisable(true);
+		}
 
 		saveItem = new MenuItem("保存");
-		saveItem.setGraphic(new ImageView(FATUtil.saveImg));
+		saveItem.setGraphic(new ImageView(FATUtil.SAVE_IMG));
 		saveItem.setOnAction(ActionEvent -> {
 			newContent = contentField.getText();
 			oldContent = file.getContent();
@@ -71,7 +74,7 @@ public class FileView {
 		});
 		
 		closeItem = new MenuItem("关闭");
-		closeItem.setGraphic(new ImageView(FATUtil.closeImg));
+		closeItem.setGraphic(new ImageView(FATUtil.CLOSE_IMG));
 		closeItem.setOnAction(ActionEvent -> onClose(ActionEvent));		
 		
 		fileMenu = new Menu("File", null, saveItem, closeItem);
@@ -85,7 +88,7 @@ public class FileView {
 		stage.setScene(scene);
 		stage.setTitle(file.getFileName());
 		stage.titleProperty().bind(file.fileNamePProperty());
-		stage.getIcons().add(new Image(FATUtil.fileImg));
+		stage.getIcons().add(new Image(FATUtil.FILE_IMG));
 		stage.setOnCloseRequest(new EventHandler<WindowEvent>() {
 
 			@Override

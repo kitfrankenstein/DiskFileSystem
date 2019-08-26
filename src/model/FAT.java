@@ -44,11 +44,10 @@ public class FAT implements Serializable{
 		c.setPath(rootPath);
 	}
 
-	public void addOpenedFile(DiskBlock block, int flag) {
+	public void addOpenedFile(DiskBlock block) {
 		File thisFile = (File) block.getObject();
 		openedFiles.add(thisFile);
 		thisFile.setOpened(true);
-		thisFile.setFlag(flag);
 	}
 
 	public void removeOpenedFile(DiskBlock block) {
@@ -90,7 +89,7 @@ public class FAT implements Serializable{
 			folderName += index;
 			for (int i = 2; i < diskBlocks.length; i++) {
 				if (!diskBlocks[i].isFree()) {
-					if (diskBlocks[i].getType() == FATUtil.FOLDER) {
+					if (diskBlocks[i].getType().equals(FATUtil.FOLDER)) {
 						Folder folder = (Folder) diskBlocks[i].getObject();
 						if (path.equals(folder.getLocation())) {
 							if (folderName.equals(folder.getFolderName())) {
@@ -139,7 +138,7 @@ public class FAT implements Serializable{
 			fileName += index;
 			for (int i = 2; i < diskBlocks.length; i++) {
 				if (!diskBlocks[i].isFree()) {
-					if (diskBlocks[i].getType() == FATUtil.FILE) {
+					if (diskBlocks[i].getType().equals(FATUtil.FILE)) {
 						File file = (File) diskBlocks[i].getObject();
 						if (path.equals(file.getLocation())) {
 							if (fileName.equals(file.getFileName())) {
@@ -157,6 +156,7 @@ public class FAT implements Serializable{
 		} else {
 			Folder parent = getFolder(path);
 			File file = new File(fileName, path, index2, parent);
+			file.setFlag(FATUtil.FLAGWRITE);
 			if (parent instanceof Folder) {
 				parent.addChildren(file);
 			}

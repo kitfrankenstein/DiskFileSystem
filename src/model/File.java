@@ -66,7 +66,7 @@ public class File implements Serializable {
 		this.fileNameP.set(fileName);
 	}
 	private void setFlagP() {
-		this.flagP.set(String.valueOf(flag));
+		this.flagP.set(flag == FATUtil.FLAGREAD ? "只读" : "读写");
 	}
 	private void setDiskNumP() {
 		this.diskNumP.set(String.valueOf(diskNum));
@@ -218,7 +218,7 @@ public class File implements Serializable {
     private void readObject(ObjectInputStream s) throws IOException, ClassNotFoundException {
     	s.defaultReadObject();
     	fileNameP = new SimpleStringProperty(fileName);
-    	flagP = new SimpleStringProperty(String.valueOf(flag));
+    	flagP = new SimpleStringProperty(flag == FATUtil.FLAGREAD ? "只读" : "读写");
     	diskNumP = new SimpleStringProperty(String.valueOf(type));
     	locationP = new SimpleStringProperty(location);
     	lengthP = new SimpleStringProperty(String.valueOf(length));
